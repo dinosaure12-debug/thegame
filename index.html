@@ -170,6 +170,13 @@
       box-shadow: 0 7px 12px rgba(0,0,0,0.6);
     }
 
+    .hand-card.disabled {
+      opacity: 0.4;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
     .controls {
       display: flex;
       justify-content: center;
@@ -229,7 +236,7 @@
 <body>
   <div class="container">
     <h1>The Game – Solo & Multijoueur</h1>
-    <div class="subtitle">Piles au centre, main partagée, coop en ligne possible.</div>
+    <div class="subtitle">Piles au centre, main par joueur, deck commun.</div>
 
     <!-- Zone mode / réseau -->
     <div class="net-controls">
@@ -266,17 +273,17 @@
 
     <div class="separator"></div>
 
-    <div class="hand-title">Main</div>
+    <div class="hand-title">Ta main</div>
     <div id="hand" class="hand"></div>
 
     <div class="controls">
       <button id="new-game" class="btn">Reset</button>
-      <button id="end-turn" class="btn btn-primary">Finir tour</button>
+      <button id="end-turn" class="btn btn-primary">Finir tour / Piocher</button>
     </div>
   </div>
 
   <script>
-    /******** FIREBASE CONFIG (TA CONFIG) ********/
+    /******** FIREBASE CONFIG ********/
     const firebaseConfig = {
       apiKey: "AIzaSyCRRVuWD29vt6qgp1iEBfPha-mNRQO2C54",
       authDomain: "the-game-80e93.firebaseapp.com",
@@ -288,18 +295,18 @@
 
     let firebaseAvailable = true;
     try { firebase.initializeApp(firebaseConfig); }
-    catch(e){ firebaseAvailable = false; }
-
+    catch(e){ console.warn("Firebase error:", e); firebaseAvailable = false; }
     const db = firebaseAvailable ? firebase.firestore() : null;
 
-    /******** LOGIQUE DE JEU (identique à la version précédente) ********/
+    /******** LOGIQUE DE JEU ********/
     const HAND_SIZE = 8;
-    const MIN_PLAYS_PER_TURN = 2;
+    const MIN_PLAYS_PER_TURN = 2; // utilisé en solo uniquement
 
-    let mode = "solo";
+    let mode = "solo";           // "solo" ou "online"
     let game = null;
     let selectedIndex = null;
 
+    // Joueur local
     let localPlayerId = localStorage.getItem("thegame_player_id");
     if(!localPlayerId){
       localPlayerId="player-"+Math.random().toString(36).substring(2,10);
@@ -328,6 +335,28 @@
       return {deck,piles,hand,turn:1,playsThisTurn:0,gameOver:false};
     }
 
+    // Pour le mode online : deck + piles + mains par joueur
+    function createNewOnlineGameState(){
+      const deck=[];
+      for(let i=2;i<=99;i++) deck.push(i);
+      for(let i=deck.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [deck[i],deck[j]]=[deck[j],deck[i]];
+      }
+      const piles=[
+        {value:100,ascending:false},
+        {value:100,ascending:false},
+        {value:1,ascending:true},
+        {value:1,ascending:true}
+      ];
+      return {
+        deck,
+        piles,
+        hands:{},   // { playerId: [cartes] }
+        gameOver:false
+      };
+    }
+
     function canPlay(pile,card){
       const v=pile.value;
       if(pile.ascending){
@@ -341,10 +370,27 @@
       return state.hand.some(c=>state.piles.some(p=>canPlay(p,c)));
     }
 
-    function drawUpTo(state,size){
-      while(state.hand.length<size && state.deck.length>0){
-        state.hand.push(state.deck.pop());
+    // pour online : renvoie la main du joueur (et la crée si besoin)
+    function ensureHand(state, playerId){
+      if(!state.hands) state.hands={};
+      if(!state.hands[playerId]) state.hands[playerId]=[];
+      return state.hands[playerId];
+    }
+
+    function allHandsEmpty(state){
+      if(!state.hands) return true;
+      return Object.values(state.hands).every(h=>!h || h.length===0);
+    }
+
+    function drawUpToHandFromDeck(state, hand, size){
+      while(hand.length<size && state.deck.length>0){
+        hand.push(state.deck.pop());
       }
+    }
+
+    // version solo (ancienne)
+    function drawUpTo(state,size){
+      drawUpToHandFromDeck(state, state.hand, size);
     }
 
     function playOneCardOnState(state,handIdx,pileIdx){
@@ -381,20 +427,75 @@
       return "Tour "+state.turn;
     }
 
+    // Online : jouer une carte depuis la main du joueur local
+    function playOneCardOnlineOnState(state, playerId, handIdx, pileIdx){
+      if(state.gameOver) return "La partie est terminée.";
+      const hand = ensureHand(state, playerId);
+      if(handIdx<0 || handIdx>=hand.length) return "Index carte invalide.";
+      const card = hand[handIdx];
+      const pile = state.piles[pileIdx];
+      if(!canPlay(pile,card)) return "Coup illégal.";
+      pile.value = card;
+      hand.splice(handIdx,1);
+
+      if(state.deck.length===0 && allHandsEmpty(state)){
+        state.gameOver=true;
+        return "Toutes les cartes ont été jouées.";
+      }
+      return "OK";
+    }
+
+    // Online : "finir tour" = piocher pour ce joueur
+    function endTurnOnlineOnState(state, playerId){
+      if(state.gameOver) return "La partie est terminée.";
+      const hand = ensureHand(state, playerId);
+      drawUpToHandFromDeck(state, hand, HAND_SIZE);
+      if(state.deck.length===0 && allHandsEmpty(state)){
+        state.gameOver=true;
+        return "Toutes les cartes ont été jouées.";
+      }
+      return "Tu as pioché. À toi de jouer.";
+    }
+
     /******** UI ********/
     function setStatus(t){ document.getElementById("status").innerText=t; }
     function setInfo(t){ document.getElementById("info").innerHTML=t; }
+
+    function updateModeBadge(){
+      const badge=document.getElementById("mode-badge");
+      if(mode==="solo") badge.textContent="Mode : solo local";
+      else badge.textContent="Mode : multijoueur";
+    }
+
+    function updateRoomInfo(){
+      const el=document.getElementById("room-info");
+      if(mode==="online" && currentRoomCode) el.textContent="Partie : "+currentRoomCode;
+      else el.textContent="";
+    }
+
+    function getCurrentHand(){
+      if(!game) return [];
+      if(mode==="online" && game.hands){
+        return ensureHand(game, localPlayerId);
+      }
+      return game.hand || [];
+    }
 
     function render(){
       if(!game){
         setInfo("Clique sur Reset ou crée/rejoins une partie.");
         return;
       }
+      const hand = getCurrentHand();
+      if(selectedIndex!=null && selectedIndex>=hand.length) selectedIndex=null;
+
+      const deckCount = game.deck ? game.deck.length : 0;
+
       setInfo(
-        "Tour <b>"+game.turn+
-        "</b> — Deck : <b>"+game.deck.length+
+        "Deck : <b>"+deckCount+
+        "</b> — Cartes dans ta main : <b>"+hand.length+
         "</b><br/>Carte sélectionnée : "+
-        (selectedIndex!=null ? "<b>"+game.hand[selectedIndex]+"</b>" : "<i>Aucune</i>")
+        (selectedIndex!=null ? "<b>"+hand[selectedIndex]+"</b>" : "<i>Aucune</i>")
       );
 
       for(let i=0;i<4;i++){
@@ -405,11 +506,13 @@
 
       const handDiv=document.getElementById("hand");
       handDiv.innerHTML="";
-      game.hand.forEach((c,i)=>{
+      hand.forEach((c,i)=>{
         const el=document.createElement("div");
         el.className="hand-card"+(selectedIndex===i?" selected":"");
+        if(game.gameOver) el.classList.add("disabled");
         el.textContent=c;
         el.onclick=()=>{
+          if(game.gameOver) return;
           selectedIndex=(selectedIndex===i?null:i);
           render();
         };
@@ -424,20 +527,23 @@
       currentRoomCode=null;
       game=createNewGameState();
       selectedIndex=null;
+      updateModeBadge();
+      updateRoomInfo();
       setStatus("Mode solo.");
       render();
     }
 
-    /******** MULTIJoueur Firestore ********/
+    /******** MULTIJOUEUR ********/
     function subscribeRoom(code){
       if(!db) return;
       if(unsubscribeRoom) unsubscribeRoom();
-      unsubscribeRoom=db.collection("rooms").doc(code).onSnapshot(s=>{
+      unsubscribeRoom = db.collection("rooms").doc(code).onSnapshot(s=>{
         if(!s.exists){
           setStatus("Partie supprimée.");
           return;
         }
-        game=s.data().game;
+        const data = s.data();
+        game = data.game;
         render();
       });
     }
@@ -447,7 +553,11 @@
       const code=Math.random().toString(36).substring(2,6).toUpperCase();
       currentRoomCode=code;
       const room=db.collection("rooms").doc(code);
-      const initial=createNewGameState();
+
+      const initial = createNewOnlineGameState();
+      const hostHand = ensureHand(initial, localPlayerId);
+      drawUpToHandFromDeck(initial, hostHand, HAND_SIZE);
+
       await room.set({
         code,
         createdAt:Date.now(),
@@ -455,7 +565,10 @@
         players:{ [localPlayerId]:{joinedAt:Date.now()} },
         game:initial
       });
+
       mode="online";
+      updateModeBadge();
+      updateRoomInfo();
       subscribeRoom(code);
       setStatus("Partie créée. Code : "+code);
       render();
@@ -468,40 +581,63 @@
       const room=db.collection("rooms").doc(code);
       const snap=await room.get();
       if(!snap.exists) return setStatus("Partie introuvable.");
+
+      // Ajout du joueur dans players
       await room.update({
         ["players."+localPlayerId]:{joinedAt:Date.now()}
       });
+
+      // Distribution de la main pour ce joueur
+      const snap2 = await room.get();
+      const data2 = snap2.data();
+      const g = data2.game || {};
+      const hand = ensureHand(g, localPlayerId);
+      if(hand.length===0){
+        drawUpToHandFromDeck(g, hand, HAND_SIZE);
+        await room.update({ game: g });
+      }
+
       currentRoomCode=code;
       mode="online";
+      updateModeBadge();
+      updateRoomInfo();
       subscribeRoom(code);
       setStatus("Rejoint "+code);
     }
 
     async function networkedPlayOneCard(i,p){
-      if(mode!=="online"||!currentRoomCode||!db){
+      const hand = getCurrentHand();
+      if(!game || i==null || i<0 || i>=hand.length) return;
+
+      if(mode!=="online" || !currentRoomCode || !db || !game.hands){
+        // Solo
         const msg=playOneCardOnState(game,i,p);
         setStatus(msg);
         selectedIndex=null;
         render();
         return;
       }
+
       const newGame=JSON.parse(JSON.stringify(game));
-      const msg=playOneCardOnState(newGame,i,p);
+      const msg=playOneCardOnlineOnState(newGame, localPlayerId, i, p);
       await db.collection("rooms").doc(currentRoomCode).update({game:newGame});
       setStatus(msg);
       selectedIndex=null;
     }
 
     async function networkedEndTurn(){
-      if(mode!=="online"||!currentRoomCode||!db){
+      if(!game) return;
+
+      if(mode!=="online" || !currentRoomCode || !db || !game.hands){
         const msg=endTurnOnState(game);
         setStatus(msg);
         selectedIndex=null;
         render();
         return;
       }
+
       const newGame=JSON.parse(JSON.stringify(game));
-      const msg=endTurnOnState(newGame);
+      const msg=endTurnOnlineOnState(newGame, localPlayerId);
       await db.collection("rooms").doc(currentRoomCode).update({game:newGame});
       setStatus(msg);
       selectedIndex=null;
@@ -513,7 +649,10 @@
 
     for(let i=0;i<4;i++){
       document.getElementById("pile-"+i).onclick=()=>{
-        if(selectedIndex==null) return setStatus("Choisis une carte.");
+        if(selectedIndex==null){
+          setStatus("Choisis une carte.");
+          return;
+        }
         networkedPlayOneCard(selectedIndex,i);
       };
     }
@@ -522,6 +661,7 @@
     document.getElementById("btn-create-online").onclick=createOnlineRoom;
     document.getElementById("btn-join-online").onclick=joinOnlineRoom;
 
+    // Démarrage
     startSolo();
   </script>
 </body>
