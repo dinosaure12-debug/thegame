@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-  <!-- Optionnel : police un peu plus technique/élégante pour les numéros -->
+  <!-- Police un peu plus technique pour les numéros (optionnel) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&display=swap" rel="stylesheet">
@@ -157,7 +157,7 @@
       flex-wrap: wrap;
     }
 
-    /* CARTES BLUEPRINT TECHNIQUES – CSS only */
+    /* CARTES – blueprint technique (CSS only) */
     .hand-card {
       width: 60px;
       height: 90px;
@@ -170,6 +170,16 @@
         0 8px 14px rgba(0, 0, 0, 0.9);
       border: 1px solid rgba(129, 230, 217, 0.65);
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Cinzel", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #e5f2ff;
+      text-shadow:
+        0 0 6px rgba(129, 230, 217, 0.8),
+        0 0 12px rgba(56, 189, 248, 0.7);
       transition:
         transform 0.1s ease,
         box-shadow 0.1s ease,
@@ -229,32 +239,6 @@
         0 0 0 1px rgba(31, 41, 55, 0.8),
         0 4px 10px rgba(0, 0, 0, 0.7);
     }
-
-    .bp-number {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: "Cinzel", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 26px;
-      color: #e5f2ff;
-      text-shadow:
-        0 0 6px rgba(129, 230, 217, 0.8),
-        0 0 12px rgba(56, 189, 248, 0.7);
-      z-index: 1;
-    }
-
-    .bp-corner {
-      position: absolute;
-      font-size: 10px;
-      color: rgba(191, 219, 254, 0.9);
-      z-index: 1;
-    }
-    .bp-corner.top-left     { top: 4px;  left: 6px; }
-    .bp-corner.top-right    { top: 4px;  right: 6px; }
-    .bp-corner.bottom-left  { bottom: 4px; left: 6px; }
-    .bp-corner.bottom-right { bottom: 4px; right: 6px; }
 
     .controls {
       display: flex;
@@ -406,12 +390,6 @@
     let currentRoomCode = null;
     let unsubscribeRoom = null;
 
-    function sortHandAscending(hand) {
-      if (Array.isArray(hand)) {
-        hand.sort((a, b) => a - b);
-      }
-    }
-
     function createNewGameState(){
       const deck=[];
       for(let i=2;i<=99;i++) deck.push(i);
@@ -429,7 +407,6 @@
       while(hand.length<HAND_SIZE && deck.length>0){
         hand.push(deck.pop());
       }
-      sortHandAscending(hand);
       return {deck,piles,hand,turn:1,playsThisTurn:0,gameOver:false};
     }
 
@@ -484,10 +461,9 @@
       while(hand.length<size && state.deck.length>0){
         hand.push(state.deck.pop());
       }
-      sortHandAscending(hand);
     }
 
-    // version solo
+    // version solo (ancienne)
     function drawUpTo(state,size){
       drawUpToHandFromDeck(state, state.hand, size);
     }
@@ -586,6 +562,9 @@
         return;
       }
       const hand = getCurrentHand();
+      // Tri croissant pour l'affichage (et la logique) :
+      hand.sort((a, b) => a - b);
+
       if(selectedIndex!=null && selectedIndex>=hand.length) selectedIndex=null;
 
       const deckCount = game.deck ? game.deck.length : 0;
@@ -606,43 +585,16 @@
       const handDiv=document.getElementById("hand");
       handDiv.innerHTML="";
       hand.forEach((c,i)=>{
-        const card=document.createElement("div");
-        card.className="hand-card"+(selectedIndex===i?" selected":"");
-        if(game.gameOver) card.classList.add("disabled");
-
-        const num = document.createElement("div");
-        num.className = "bp-number";
-        num.textContent = c;
-
-        const tl = document.createElement("div");
-        tl.className = "bp-corner top-left";
-        tl.textContent = c;
-
-        const tr = document.createElement("div");
-        tr.className = "bp-corner top-right";
-        tr.textContent = c;
-
-        const bl = document.createElement("div");
-        bl.className = "bp-corner bottom-left";
-        bl.textContent = c;
-
-        const br = document.createElement("div");
-        br.className = "bp-corner bottom-right";
-        br.textContent = c;
-
-        card.appendChild(num);
-        card.appendChild(tl);
-        card.appendChild(tr);
-        card.appendChild(bl);
-        card.appendChild(br);
-
-        card.onclick=()=>{
+        const el=document.createElement("div");
+        el.className="hand-card"+(selectedIndex===i?" selected":"");
+        if(game.gameOver) el.classList.add("disabled");
+        el.textContent=c;
+        el.onclick=()=>{
           if(game.gameOver) return;
-          if(selectedIndex===i) selectedIndex=null;
-          else selectedIndex=i;
+          selectedIndex=(selectedIndex===i?null:i);
           render();
         };
-        handDiv.appendChild(card);
+        handDiv.appendChild(el);
       });
     }
 
@@ -702,4 +654,46 @@
 
     async function joinOnlineRoom(){
       if(!db) return setStatus("Firebase indisponible.");
-      const code=document.getEle
+      const code=document.getElementById("join-code-input").value.trim().toUpperCase();
+      if(!code) return setStatus("Saisis un code.");
+      const room=db.collection("rooms").doc(code);
+      const snap=await room.get();
+      if(!snap.exists) return setStatus("Partie introuvable.");
+
+      // Ajout du joueur dans players
+      await room.update({
+        ["players."+localPlayerId]:{joinedAt:Date.now()}
+      });
+
+      // Distribution de la main pour ce joueur
+      const snap2 = await room.get();
+      const data2 = snap2.data();
+      const g = data2.game || {};
+      const hand = ensureHand(g, localPlayerId);
+      if(hand.length===0){
+        drawUpToHandFromDeck(g, hand, HAND_SIZE);
+        await room.update({ game: g });
+      }
+
+      currentRoomCode=code;
+      mode="online";
+      updateModeBadge();
+      updateRoomInfo();
+      subscribeRoom(code);
+      setStatus("Rejoint "+code);
+    }
+
+    async function networkedPlayOneCard(i,p){
+      const hand = getCurrentHand();
+      if(!game || i==null || i<0 || i>=hand.length) return;
+
+      if(mode!=="online" || !currentRoomCode || !db || !game.hands){
+        // Solo
+        const msg=playOneCardOnState(game,i,p);
+        setStatus(msg);
+        selectedIndex=null;
+        render();
+        return;
+      }
+
+      const newGame=JSON.parse(JS
