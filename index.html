@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>The Game - Solo & Multijoueur</title>
+  <title>The Game – Solo & Multijoueur</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Firebase (compat) -->
@@ -19,20 +19,47 @@
       --text:#f9fafb;
       --accent:#f97316;
 
-      --up:#22c55e;    /* vert montantes */
-      --down:#ef4444;  /* rouge descendantes */
-      --glow: 0 0 0 2px rgba(249,115,22,.35), 0 10px 25px rgba(249,115,22,.20);
+      --up:#22c55e;
+      --down:#ef4444;
+
+      /* Base texture (SVG) */
+      --cardSvg: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='360' height='520' viewBox='0 0 360 520'>\
+  <defs>\
+    <linearGradient id='g' x1='0' x2='1' y1='0' y2='1'>\
+      <stop offset='0' stop-color='%23131b2b'/>\
+      <stop offset='1' stop-color='%230b1220'/>\
+    </linearGradient>\
+    <radialGradient id='shine' cx='25%25' cy='18%25' r='65%25'>\
+      <stop offset='0' stop-color='white' stop-opacity='.20'/>\
+      <stop offset='.55' stop-color='white' stop-opacity='.06'/>\
+      <stop offset='1' stop-color='white' stop-opacity='0'/>\
+    </radialGradient>\
+    <filter id='grain'>\
+      <feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/>\
+      <feColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .10 0'/>\
+    </filter>\
+  </defs>\
+  <rect x='0' y='0' width='360' height='520' rx='34' fill='url(%23g)'/>\
+  <rect x='0' y='0' width='360' height='520' rx='34' fill='url(%23shine)'/>\
+  <rect x='18' y='18' width='324' height='484' rx='28' fill='none' stroke='white' stroke-opacity='.10' stroke-width='4'/>\
+  <rect x='26' y='26' width='308' height='468' rx='26' fill='none' stroke='white' stroke-opacity='.08' stroke-width='2'/>\
+  <rect x='0' y='0' width='360' height='520' rx='34' filter='url(%23grain)' opacity='.9'/>\
+</svg>");
     }
 
     *{ box-sizing:border-box; }
     body{
-      margin:0; font-family:Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,.10), transparent 55%),
-                  radial-gradient(900px 500px at 90% 20%, rgba(34,197,94,.10), transparent 55%),
-                  radial-gradient(900px 500px at 70% 80%, rgba(239,68,68,.10), transparent 55%),
-                  var(--bg);
+      margin:0; font-family: Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,.10), transparent 55%),
+        radial-gradient(900px 500px at 90% 20%, rgba(34,197,94,.10), transparent 55%),
+        radial-gradient(900px 500px at 70% 80%, rgba(239,68,68,.10), transparent 55%),
+        var(--bg);
       color:var(--text);
-      display:flex; flex-direction:column; align-items:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
       padding: 14px 10px 24px;
     }
 
@@ -40,7 +67,7 @@
 
     .header{
       display:flex; flex-direction:column; gap:4px;
-      padding: 14px 14px;
+      padding: 14px;
       border:1px solid var(--border);
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
       border-radius:16px;
@@ -48,7 +75,7 @@
     .header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
     .subtitle{ font-size:12px; color:var(--muted); }
 
-    /* panneau paramétrage séparé */
+    /* Panneau paramétrage séparé */
     .setup{
       display:flex; flex-wrap:wrap; gap:10px;
       align-items:flex-start;
@@ -97,7 +124,7 @@
       border:1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.18);
       color: var(--text);
-      font-weight:700;
+      font-weight:800;
       cursor:pointer;
       font-size:12px;
       transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
@@ -126,7 +153,7 @@
     .info{ font-size:13px; color: rgba(255,255,255,.88); line-height:1.35; }
     .status{ font-size:13px; color:#fbbf24; min-height:18px; }
 
-    /* plateau */
+    /* Plateau */
     .boardWrap{
       display:flex; flex-direction:column; gap:12px;
       padding: 14px;
@@ -134,23 +161,18 @@
       background: rgba(15,27,50,.55);
       border-radius: 16px;
     }
-
     .boardTitleRow{
       display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
     }
-    .boardTitle{
-      font-size:13px; color: var(--muted);
-    }
+    .boardTitle{ font-size:13px; color: var(--muted); }
+    .hint{ font-size:12px; color: rgba(255,255,255,.70); }
 
-    .board{
-      display:flex; flex-direction:column; align-items:center; gap:10px;
-      padding: 6px 0;
-    }
-    .pile-row{ display:flex; align-items:center; gap:10px; }
+    .board{ display:flex; flex-direction:column; align-items:center; gap:12px; padding: 6px 0; }
+    .pile-row{ display:flex; align-items:center; gap:12px; }
 
     .base-card{
       width:56px; height:84px;
-      border-radius:10px;
+      border-radius:12px;
       border:1px solid rgba(255,255,255,.16);
       display:flex; flex-direction:column; align-items:center; justify-content:center;
       background: rgba(0,0,0,.20);
@@ -159,44 +181,9 @@
     }
     .base-dir{ font-size:13px; margin-top:2px; color: rgba(255,255,255,.65); }
 
-    .pile-card{
-      width:70px; height:92px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      color: var(--text);
-      font-weight:900; font-size:18px;
-      cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      transition: transform .10s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease, filter .12s ease;
-      position:relative;
-      user-select:none;
-    }
-    .pile-card:hover{ transform: translateY(-2px); }
-    .pile-card:disabled{ opacity:.45; cursor:default; transform:none; box-shadow:none; }
+    .controls{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top: 2px; }
 
-    /* Couleurs piles */
-    .pile-up{
-      border-color: rgba(34,197,94,.35);
-      background: linear-gradient(180deg, rgba(34,197,94,.22), rgba(0,0,0,.18));
-    }
-    .pile-down{
-      border-color: rgba(239,68,68,.35);
-      background: linear-gradient(180deg, rgba(239,68,68,.22), rgba(0,0,0,.18));
-    }
-
-    /* Surbrillance jouable / non jouable */
-    .pile-card.playable{
-      box-shadow: var(--glow);
-      border-color: rgba(249,115,22,.70);
-      filter: saturate(1.15) brightness(1.05);
-    }
-    .pile-card.not-playable{
-      opacity:.35;
-      filter: grayscale(.35) brightness(.90);
-    }
-
-    /* main */
+    /* Main */
     .handWrap{
       padding: 14px;
       border:1px solid var(--border);
@@ -208,60 +195,144 @@
       display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
     }
     .hand-title{ margin:0; font-size:13px; color: var(--muted); }
-    .hint{ font-size:12px; color: rgba(255,255,255,.70); }
-
     .hand{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
 
-    .hand-card{
-      width:64px; height:96px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.18);
-      color: var(--text);
-      font-weight:900; font-size:20px;
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer;
-      transition: transform .10s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
-      user-select:none;
+    /* ===== CARTES PREMIUM + COULEUR ÉVOLUTIVE (2..49 bleu->rouge ; 51..99 rouge->bleu) ===== */
+    .card{
       position:relative;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.16);
+      background-image: var(--cardSvg);
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 12px 28px rgba(0,0,0,.40);
+      user-select:none;
+      overflow:hidden;
+      /* couleurs par défaut si jamais */
+      --c1: rgba(59,130,246,.30);
+      --c2: rgba(239,68,68,.30);
+    }
+
+    /* couche gradient “évolutive” */
+    .card::before{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(135deg, var(--c1), var(--c2));
+      opacity:.42;
+      mix-blend-mode: screen;
+      pointer-events:none;
+    }
+    /* reflet */
+    .card::after{
+      content:"";
+      position:absolute; inset:-20% -30% auto auto;
+      width:140%; height:70%;
+      background: radial-gradient(circle at 20% 20%, rgba(255,255,255,.22), transparent 60%);
+      transform: rotate(10deg);
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    /* Bande direction (↑/↓) */
+    .card .stripe{
+      position:absolute;
+      left:10px; right:10px; top:10px;
+      height:18px;
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:900;
+      color: rgba(255,255,255,.88);
+      letter-spacing:.4px;
+      z-index:2;
+    }
+    .card.up .stripe{ background: rgba(34,197,94,.18); border-color: rgba(34,197,94,.35); }
+    .card.down .stripe{ background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.35); }
+
+    /* Numéro central */
+    .card .big{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:950;
+      letter-spacing:.2px;
+      text-shadow: 0 10px 24px rgba(0,0,0,.55);
+      z-index:2;
+    }
+
+    /* Numéros coins */
+    .card .corner{
+      position:absolute;
+      font-weight:950;
+      font-size:12px;
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 8px 18px rgba(0,0,0,.55);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      z-index:2;
+    }
+    .card .corner .miniDir{ font-size:12px; opacity:.85; }
+    .card .corner.tl{ top:34px; left:12px; }
+    .card .corner.br{ bottom:12px; right:12px; transform: rotate(180deg); }
+
+    /* Main */
+    .hand-card{
+      width:74px; height:112px;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
     }
     .hand-card:hover{
-      transform: translateY(-3px);
-      border-color: rgba(249,115,22,.55);
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 36px rgba(0,0,0,.50);
+      border-color: rgba(249,115,22,.45);
     }
     .hand-card.selected{
+      transform: translateY(-8px) rotate(-2deg);
       border-color: rgba(249,115,22,.85);
-      box-shadow: var(--glow);
-      background: rgba(249,115,22,.10);
-      transform: translateY(-6px) rotate(-2deg);
+      box-shadow: 0 0 0 2px rgba(249,115,22,.35), 0 22px 44px rgba(0,0,0,.55);
+      filter: saturate(1.15) brightness(1.05);
     }
     .hand-card.disabled{ opacity:.45; cursor:default; transform:none; box-shadow:none; }
 
-    /* zone actions */
-    .controls{
-      display:flex; justify-content:center; gap:10px; flex-wrap:wrap;
-      margin-top: 2px;
+    /* Piles */
+    .pile-card{
+      width:88px; height:120px;
+      border:none; padding:0;
+      cursor:pointer;
+      transition: transform .10s ease, box-shadow .12s ease, filter .12s ease, opacity .12s ease;
+    }
+    .pile-card:hover{ transform: translateY(-2px); }
+    .pile-card:disabled{ opacity:.45; cursor:default; transform:none; box-shadow:none; }
+
+    .pile-card.playable{
+      box-shadow: 0 0 0 2px rgba(249,115,22,.35), 0 22px 44px rgba(249,115,22,.18);
+      filter: saturate(1.15) brightness(1.06);
+    }
+    .pile-card.not-playable{
+      opacity:.35;
+      filter: grayscale(.35) brightness(.90);
     }
 
-    /* animation carte */
+    .hand-card .big{ font-size:28px; }
+    .pile-card .big{ font-size:34px; }
+
+    /* Animation carte volante */
     .flying-card{
       position: fixed;
       z-index: 9999;
-      width:64px; height:96px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.18);
-      color: var(--text);
-      font-weight:900; font-size:20px;
-      display:flex; align-items:center; justify-content:center;
-      box-shadow: 0 18px 40px rgba(0,0,0,.45);
       pointer-events:none;
       transform: translate3d(0,0,0);
       will-change: transform, opacity;
+      width:74px; height:112px;
+      opacity:1;
     }
+    .flying-card .big{ font-size:28px; }
 
-    /* écran fin de partie */
+    /* Écran fin de partie */
     .overlay{
       position: fixed; inset: 0;
       background: rgba(0,0,0,.55);
@@ -286,10 +357,7 @@
     .modal h2{ margin:0; font-size:18px; }
     .modal p{ margin:0; color: rgba(255,255,255,.82); line-height:1.4; font-size:13px; }
     .modal .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    .statGrid{
-      display:grid; grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
+    .statGrid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .stat{
       border:1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.16);
@@ -298,19 +366,17 @@
       display:flex; flex-direction:column; gap:4px;
     }
     .stat .k{ font-size:12px; color: rgba(255,255,255,.70); }
-    .stat .v{ font-size:16px; font-weight:900; }
+    .stat .v{ font-size:16px; font-weight:950; }
   </style>
 </head>
 
 <body>
   <div class="container">
-
     <div class="header">
       <h1>The Game – Solo & Multijoueur</h1>
       <div class="subtitle">Piles au centre, main par joueur, deck commun.</div>
     </div>
 
-    <!-- PARAMÈTRES (détachés du plateau) -->
     <div class="setup">
       <div class="group">
         <span class="badge" id="mode-badge">Mode : solo local</span>
@@ -337,29 +403,28 @@
       <div id="status" class="status"></div>
     </div>
 
-    <!-- PLATEAU -->
     <div class="boardWrap">
       <div class="boardTitleRow">
         <div class="boardTitle">Plateau</div>
-        <div class="hint" id="play-hint">Sélectionne une carte puis clique sur une pile.</div>
+        <div class="hint">Sélectionne une carte : les piles jouables se surlignent.</div>
       </div>
 
       <div class="board">
         <div class="pile-row">
           <div class="base-card">100<div class="base-dir">↓</div></div>
-          <button class="pile-card pile-down" id="pile-0">100</button>
+          <button class="pile-card card down" id="pile-0"></button>
         </div>
         <div class="pile-row">
           <div class="base-card">100<div class="base-dir">↓</div></div>
-          <button class="pile-card pile-down" id="pile-1">100</button>
+          <button class="pile-card card down" id="pile-1"></button>
         </div>
         <div class="pile-row">
           <div class="base-card">1<div class="base-dir">↑</div></div>
-          <button class="pile-card pile-up" id="pile-2">1</button>
+          <button class="pile-card card up" id="pile-2"></button>
         </div>
         <div class="pile-row">
           <div class="base-card">1<div class="base-dir">↑</div></div>
-          <button class="pile-card pile-up" id="pile-3">1</button>
+          <button class="pile-card card up" id="pile-3"></button>
         </div>
       </div>
 
@@ -369,31 +434,23 @@
       </div>
     </div>
 
-    <!-- MAIN -->
     <div class="handWrap">
       <div class="handTitleRow">
         <div class="hand-title">Ta main</div>
-        <div class="hint">Les piles jouables se surlignent quand tu sélectionnes une carte.</div>
+        <div class="hint">Couleur évolutive : 2→49 (bleu→rouge) ; 51→99 (rouge→bleu).</div>
       </div>
       <div id="hand" class="hand"></div>
     </div>
   </div>
 
-  <!-- FIN DE PARTIE -->
   <div id="end-overlay" class="overlay">
     <div class="modal">
-      <h2 id="end-title">Bravo !</h2>
-      <p id="end-text">Partie terminée.</p>
+      <h2 id="end-title">Félicitations !</h2>
+      <p id="end-text">Vous avez joué toutes les cartes. Bravo, performance parfaite.</p>
 
       <div class="statGrid">
-        <div class="stat">
-          <div class="k">Deck restant</div>
-          <div class="v" id="end-deck">0</div>
-        </div>
-        <div class="stat">
-          <div class="k">Total restant (deck + mains)</div>
-          <div class="v" id="end-total">0</div>
-        </div>
+        <div class="stat"><div class="k">Deck restant</div><div class="v" id="end-deck">0</div></div>
+        <div class="stat"><div class="k">Total restant (deck + mains)</div><div class="v" id="end-total">0</div></div>
       </div>
 
       <div class="row">
@@ -427,7 +484,7 @@
 
     /******** ETAT APP ********/
     let mode = "solo"; // "solo" | "online"
-    let state = null;  // état de jeu unique
+    let state = null;
     let selectedIndex = null;
 
     let localPlayerId = localStorage.getItem("thegame_player_id");
@@ -445,7 +502,6 @@
     let unsubscribeRoom = null;
     let lastRoomData = null;
 
-    // pour animation
     let lastSelectedCardEl = null;
 
     /******** UI helpers ********/
@@ -474,9 +530,8 @@
     const sortAsc = (a)=> Array.isArray(a) ? a.sort((x,y)=>x-y) : a;
 
     function canPlay(pile, card){
-      const v = pile.value;
-      return pile.ascending ? (card > v || card === v - 10)
-                            : (card < v || card === v + 10);
+      const v=pile.value;
+      return pile.ascending ? (card>v || card===v-10) : (card<v || card===v+10);
     }
 
     function ensure(st, pid){
@@ -509,7 +564,7 @@
 
     function drawUpTo(st, pid, size){
       const hand = ensure(st, pid);
-      while(hand.length < size && st.deck.length > 0) hand.push(st.deck.pop());
+      while(hand.length<size && st.deck.length>0) hand.push(st.deck.pop());
       sortAsc(hand);
     }
 
@@ -522,16 +577,16 @@
       }
       const st = {
         deck,
-        piles: [
-          {value:100, ascending:false},
-          {value:100, ascending:false},
-          {value:1,   ascending:true},
-          {value:1,   ascending:true}
+        piles:[
+          {value:100,ascending:false},
+          {value:100,ascending:false},
+          {value:1,ascending:true},
+          {value:1,ascending:true}
         ],
         hands:{},
         playerOrder:[hostId],
         currentPlayerId:hostId,
-        playsThisTurnByPlayer:{ [hostId]: 0 },
+        playsThisTurnByPlayer:{[hostId]:0},
         gameOver:false
       };
       drawUpTo(st, hostId, HAND_SIZE);
@@ -541,13 +596,12 @@
     function applyPlay(st, pid, handIdx, pileIdx){
       if(st.gameOver) return { ok:false, msg:"Partie terminée." };
       ensure(st, pid);
-
       if(!isMyTurn(st, pid)) return { ok:false, msg:"Ce n'est pas ton tour." };
 
       const hand = st.hands[pid];
       sortAsc(hand);
+      if(handIdx<0 || handIdx>=hand.length) return { ok:false, msg:"Index carte invalide." };
 
-      if(handIdx < 0 || handIdx >= hand.length) return { ok:false, msg:"Index carte invalide." };
       const pile = st.piles[pileIdx];
       if(!pile) return { ok:false, msg:"Pile invalide." };
 
@@ -555,7 +609,7 @@
       if(!canPlay(pile, card)) return { ok:false, msg:"Coup illégal." };
 
       pile.value = card;
-      hand.splice(handIdx, 1);
+      hand.splice(handIdx,1);
       st.playsThisTurnByPlayer[pid] += 1;
 
       if(totalRemaining(st) === 0){
@@ -568,10 +622,9 @@
     function applyEndTurn(st, pid){
       if(st.gameOver) return { ok:false, msg:"Partie terminée." };
       ensure(st, pid);
-
       if(!isMyTurn(st, pid)) return { ok:false, msg:"Ce n'est pas ton tour." };
 
-      if(st.deck.length > 0 && st.playsThisTurnByPlayer[pid] < MIN_PLAYS_PER_TURN){
+      if(st.deck.length>0 && st.playsThisTurnByPlayer[pid] < MIN_PLAYS_PER_TURN){
         return { ok:false, msg:`Tu dois jouer ${MIN_PLAYS_PER_TURN} cartes avant de finir ton tour.` };
       }
 
@@ -588,7 +641,7 @@
 
     /******** STOCKAGE ********/
     async function loadState(){
-      if(mode === "solo") return state;
+      if(mode==="solo") return state;
       if(!roomRef) return null;
       const snap = await roomRef.get();
       lastRoomData = snap.data() || null;
@@ -597,7 +650,7 @@
 
     async function saveState(st){
       state = st;
-      if(mode === "solo") return;
+      if(mode==="solo") return;
       if(!roomRef) return;
       await roomRef.update({ game: st });
     }
@@ -605,8 +658,8 @@
     function subscribeRoom(code){
       if(!db) return;
       if(unsubscribeRoom) unsubscribeRoom();
-
       roomRef = db.collection("rooms").doc(code);
+
       unsubscribeRoom = roomRef.onSnapshot(s=>{
         if(!s.exists){
           setStatus("Partie introuvable / supprimée.");
@@ -632,18 +685,64 @@
       render();
     };
 
-    /******** ACTIONS MODE ********/
+    /******** COULEUR ÉVOLUTIVE (exigence) ********/
+    const BLUE = {r:59,g:130,b:246};  // bleu
+    const RED  = {r:239,g:68,b:68};  // rouge
+
+    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+    function lerp(a,b,t){ return Math.round(a + (b-a)*t); }
+
+    function colorToRgba(c, a){
+      return `rgba(${c.r},${c.g},${c.b},${a})`;
+    }
+
+    // 2..49: bleu -> rouge ; 51..99: rouge -> bleu
+    // (valeurs hors plage : clamp aux extrêmes, ce qui donne un rendu cohérent)
+    function gradientForValue(v){
+      if(v <= 50){
+        const t = clamp01((v - 2) / 47); // 2->0, 49->1
+        const c = { r: lerp(BLUE.r, RED.r, t), g: lerp(BLUE.g, RED.g, t), b: lerp(BLUE.b, RED.b, t) };
+        // pour un gradient plus riche, on décale légèrement la 2e couleur
+        const c2 = { r: lerp(BLUE.r, RED.r, clamp01(t + 0.18)), g: lerp(BLUE.g, RED.g, clamp01(t + 0.18)), b: lerp(BLUE.b, RED.b, clamp01(t + 0.18)) };
+        return { c1: colorToRgba(c, .34), c2: colorToRgba(c2, .34) };
+      } else {
+        const t = clamp01((v - 51) / 48); // 51->0, 99->1
+        const c = { r: lerp(RED.r, BLUE.r, t), g: lerp(RED.g, BLUE.g, t), b: lerp(RED.b, BLUE.b, t) };
+        const c2 = { r: lerp(RED.r, BLUE.r, clamp01(t + 0.18)), g: lerp(RED.g, BLUE.g, clamp01(t + 0.18)), b: lerp(RED.b, BLUE.b, clamp01(t + 0.18)) };
+        return { c1: colorToRgba(c, .34), c2: colorToRgba(c2, .34) };
+      }
+    }
+
+    function applyCardColors(el, value){
+      const g = gradientForValue(value);
+      el.style.setProperty("--c1", g.c1);
+      el.style.setProperty("--c2", g.c2);
+    }
+
+    /******** HTML carte ********/
+    function cardHTML(value, dir){
+      const d = dir === "up" ? "↑" : (dir === "down" ? "↓" : "");
+      const label = dir === "up" ? "MONTANTE" : (dir === "down" ? "DESCENDANTE" : "CARTE");
+      return `
+        <div class="stripe">${label} ${d}</div>
+        <div class="corner tl"><span class="num">${value}</span> <span class="miniDir">${d}</span></div>
+        <div class="corner br"><span class="num">${value}</span> <span class="miniDir">${d}</span></div>
+        <div class="big">${value}</div>
+      `;
+    }
+
+    /******** MODE / ROOMS ********/
     function startSolo(){
       if(unsubscribeRoom) unsubscribeRoom();
-      unsubscribeRoom = null;
-      roomRef = null;
-      currentRoomCode = null;
-      lastRoomData = null;
+      unsubscribeRoom=null;
+      roomRef=null;
+      currentRoomCode=null;
+      lastRoomData=null;
 
-      mode = "solo";
-      state = newGameState(localPlayerId);
-      selectedIndex = null;
-      lastSelectedCardEl = null;
+      mode="solo";
+      state=newGameState(localPlayerId);
+      selectedIndex=null;
+      lastSelectedCardEl=null;
       setStatus("Mode solo.");
       hideEndScreen();
       render();
@@ -710,8 +809,9 @@
       const to = pileBtn.getBoundingClientRect();
 
       const fly = document.createElement("div");
-      fly.className = "flying-card";
-      fly.textContent = cardValue;
+      fly.className = "flying-card card";
+      fly.innerHTML = cardHTML(cardValue, "");
+      applyCardColors(fly, cardValue);
 
       fly.style.left = from.left + "px";
       fly.style.top = from.top + "px";
@@ -723,12 +823,8 @@
       const dx = (to.left + to.width/2) - (from.left + from.width/2);
       const dy = (to.top + to.height/2) - (from.top + from.height/2);
 
-      // pulse pile
-      pileBtn.classList.add("playable");
-      setTimeout(()=>pileBtn.classList.remove("playable"), 220);
-
       requestAnimationFrame(()=>{
-        fly.style.transition = "transform 220ms ease, opacity 220ms ease";
+        fly.style.transition = "transform 230ms ease, opacity 230ms ease";
         fly.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(.92)`;
         fly.style.opacity = "0.15";
       });
@@ -744,32 +840,44 @@
       document.getElementById("end-deck").innerText = String(state?.deck?.length || 0);
       document.getElementById("end-total").innerText = String(state ? totalRemaining(state) : 0);
 
-      document.getElementById("end-title").innerText = "Félicitations !";
-      document.getElementById("end-text").innerText =
-        "Vous avez joué toutes les cartes. Bravo, performance parfaite.";
-
       overlay.classList.add("show");
     }
-
     function hideEndScreen(){
       document.getElementById("end-overlay")?.classList.remove("show");
     }
-
     document.getElementById("btn-video").onclick = ()=>{
-      // fiable (clic utilisateur)
       window.open(BRAVO_VIDEO_URL, "_blank", "noopener,noreferrer");
     };
     document.getElementById("btn-close-end").onclick = hideEndScreen;
-    document.getElementById("btn-replay").onclick = ()=>{
-      // pragmatique : on relance en solo (stable et immédiat)
-      startSolo();
+    document.getElementById("btn-replay").onclick = startSolo;
+
+    /******** EVENTS ********/
+    document.getElementById("btn-solo").onclick = startSolo;
+    document.getElementById("btn-create-online").onclick = createOnlineRoom;
+    document.getElementById("btn-join-online").onclick = joinOnlineRoom;
+
+    document.getElementById("new-game").onclick = ()=>{
+      if(mode==="online") startSolo();
+      else{
+        state = newGameState(localPlayerId);
+        selectedIndex=null;
+        lastSelectedCardEl=null;
+        setStatus("Reset.");
+        hideEndScreen();
+        render();
+      }
     };
+    document.getElementById("end-turn").onclick = onEndTurn;
+
+    for(let i=0;i<4;i++){
+      document.getElementById("pile-"+i).onclick = ()=>onPileClick(i);
+    }
 
     /******** ACTIONS JEU ********/
     async function onPileClick(pileIdx){
       if(!state) return setStatus("Clique sur Reset ou crée/rejoins une partie.");
-
       if(selectedIndex == null) return setStatus("Choisis une carte.");
+
       const st = (mode==="solo") ? state : await loadState();
       if(!st) return setStatus("État introuvable.");
 
@@ -784,7 +892,6 @@
       setStatus(res.msg);
 
       if(res.ok){
-        // animation avant render
         animatePlay(lastSelectedCardEl, pileBtn, cardValue);
 
         selectedIndex = null;
@@ -814,13 +921,7 @@
 
       if(!state){
         setInfo("Clique sur Reset ou crée/rejoins une partie.");
-        for(let i=0;i<4;i++){
-          const btn=document.getElementById("pile-"+i);
-          btn.textContent = (i<2) ? "100" : "1";
-          btn.disabled = true;
-          btn.classList.remove("playable","not-playable");
-        }
-        document.getElementById("hand").innerHTML = "";
+        document.getElementById("hand").innerHTML="";
         hideEndScreen();
         return;
       }
@@ -853,78 +954,56 @@
         extra
       );
 
-      // Piles: texte + désactivation + mise en évidence jouable
       const selectedCard = (selectedIndex!=null) ? hand[selectedIndex] : null;
 
+      // piles
       for(let i=0;i<4;i++){
         const btn=document.getElementById("pile-"+i);
-        btn.textContent = state.piles[i].value;
         btn.disabled = disableBoard;
 
         btn.classList.remove("playable","not-playable");
+        const v = state.piles[i].value;
+        const dir = state.piles[i].ascending ? "up" : "down";
+        btn.classList.toggle("up", dir==="up");
+        btn.classList.toggle("down", dir==="down");
+
+        btn.innerHTML = cardHTML(v, dir);
+        applyCardColors(btn, v);
+
         if(!disableBoard && selectedCard != null){
           const ok = canPlay(state.piles[i], selectedCard);
           btn.classList.add(ok ? "playable" : "not-playable");
         }
       }
 
-      // Main
-      const handDiv = document.getElementById("hand");
-      handDiv.innerHTML = "";
+      // main
+      const handDiv=document.getElementById("hand");
+      handDiv.innerHTML="";
 
       hand.forEach((c,i)=>{
-        const el = document.createElement("div");
-        el.className = "hand-card" + (selectedIndex===i ? " selected" : "");
-        el.textContent = c;
-        el.dataset.idx = i;
+        const el=document.createElement("div");
+        el.className="hand-card card" + (selectedIndex===i ? " selected" : "");
+        el.innerHTML = cardHTML(c, "");
+        applyCardColors(el, c);
 
         if(disableBoard) el.classList.add("disabled");
 
-        el.onclick = ()=>{
+        el.onclick=()=>{
           if(disableBoard) return setStatus("Action impossible (tour/adversaire/partie finie).");
-          if(selectedIndex === i){
-            selectedIndex = null;
-            lastSelectedCardEl = null;
-          } else {
-            selectedIndex = i;
-            lastSelectedCardEl = el;
+          if(selectedIndex===i){
+            selectedIndex=null;
+            lastSelectedCardEl=null;
+          }else{
+            selectedIndex=i;
+            lastSelectedCardEl=el;
           }
           render();
         };
         handDiv.appendChild(el);
       });
 
-      // fin de partie
-      if(state.gameOver){
-        showEndScreen();
-      } else {
-        hideEndScreen();
-      }
-    }
-
-    /******** EVENTS ********/
-    document.getElementById("btn-solo").onclick = startSolo;
-    document.getElementById("btn-create-online").onclick = createOnlineRoom;
-    document.getElementById("btn-join-online").onclick = joinOnlineRoom;
-
-    document.getElementById("new-game").onclick = ()=>{
-      if(mode==="online"){
-        // pragmatique : on repasse en solo (évite grief sur room)
-        startSolo();
-      } else {
-        state = newGameState(localPlayerId);
-        selectedIndex = null;
-        lastSelectedCardEl = null;
-        setStatus("Reset.");
-        hideEndScreen();
-        render();
-      }
-    };
-
-    document.getElementById("end-turn").onclick = onEndTurn;
-
-    for(let i=0;i<4;i++){
-      document.getElementById("pile-"+i).onclick = ()=>onPileClick(i);
+      if(state.gameOver) showEndScreen();
+      else hideEndScreen();
     }
 
     // init
