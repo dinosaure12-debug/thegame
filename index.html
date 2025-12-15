@@ -10,91 +10,397 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#111827; color:#f9fafb; display:flex; flex-direction:column; align-items:center; }
-    h1 { margin-top:16px; margin-bottom:4px; font-size:20px; text-align:center; }
-    .subtitle { font-size:13px; color:#e5e7eb; margin-bottom:10px; text-align:center; }
-    .container { max-width:900px; width:100%; padding:0 10px 24px 10px; box-sizing:border-box; }
-    .info { font-size:13px; margin-bottom:6px; min-height:32px; }
-    .status { margin-top:4px; margin-bottom:12px; min-height:24px; font-size:13px; color:#fbbf24; }
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b32;
+      --panel2:#0c172e;
+      --border:rgba(255,255,255,.10);
+      --muted:rgba(255,255,255,.70);
+      --text:#f9fafb;
+      --accent:#f97316;
 
-    .board { margin-top:10px; margin-bottom:20px; display:flex; flex-direction:column; align-items:center; gap:8px; }
-    .pile-row { display:flex; align-items:center; gap:8px; }
-    .base-card { width:52px; height:78px; border-radius:6px; border:2px solid #9ca3af; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#111827; color:#f9fafb; font-weight:700; font-size:16px; }
-    .base-dir { font-size:14px; margin-top:2px; color:#9ca3af; }
+      --up:#22c55e;    /* vert montantes */
+      --down:#ef4444;  /* rouge descendantes */
+      --glow: 0 0 0 2px rgba(249,115,22,.35), 0 10px 25px rgba(249,115,22,.20);
+    }
 
-    .pile-card { width:52px; height:78px; border-radius:6px; border:none; background:#4b5563; color:#f9fafb; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform .1s ease, box-shadow .1s ease, background .1s ease; }
-    .pile-card:hover { transform: translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.4); background:#6b7280; }
-    .pile-card:disabled { opacity:.4; cursor:default; transform:none; box-shadow:none; }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(249,115,22,.10), transparent 55%),
+                  radial-gradient(900px 500px at 90% 20%, rgba(34,197,94,.10), transparent 55%),
+                  radial-gradient(900px 500px at 70% 80%, rgba(239,68,68,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      display:flex; flex-direction:column; align-items:center;
+      padding: 14px 10px 24px;
+    }
 
-    .separator { width:100%; height:1px; background:#374151; margin:12px 0; }
-    .hand-title { margin-bottom:6px; font-size:14px; }
-    .hand { display:flex; justify-content:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .container{ width:100%; max-width:980px; display:flex; flex-direction:column; gap:12px; }
 
-    .hand-card { width:60px; height:90px; border-radius:8px; border:2px solid #9ca3af; background:#111827; color:#f9fafb; font-weight:700; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform .1s ease, box-shadow .1s ease, border-color .1s ease, background .1s ease; }
-    .hand-card:hover { transform: translateY(-3px); box-shadow:0 5px 10px rgba(0,0,0,.5); border-color:#f97316; }
-    .hand-card.selected { border-color:#f97316; background:#1f2937; transform: translateY(-5px); box-shadow:0 7px 12px rgba(0,0,0,.6); }
-    .hand-card.disabled { opacity:.4; cursor:default; transform:none; box-shadow:none; }
+    .header{
+      display:flex; flex-direction:column; gap:4px;
+      padding: 14px 14px;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border-radius:16px;
+    }
+    .header h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+    .subtitle{ font-size:12px; color:var(--muted); }
 
-    .controls { display:flex; justify-content:center; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
-    .btn { padding:6px 12px; border-radius:9999px; border:1px solid #9ca3af; background:#111827; color:#f9fafb; font-weight:600; cursor:pointer; font-size:12px; transition: background .1s ease, transform .1s ease, box-shadow .1s ease; }
-    .btn-primary { background:#f97316; border-color:#f97316; color:#111827; }
+    /* panneau paramétrage séparé */
+    .setup{
+      display:flex; flex-wrap:wrap; gap:10px;
+      align-items:flex-start;
+      padding: 12px;
+      border:1px solid var(--border);
+      background: rgba(15,27,50,.65);
+      border-radius:16px;
+      backdrop-filter: blur(6px);
+    }
+    .setup .group{
+      display:flex; flex-wrap:wrap; gap:8px;
+      align-items:center;
+      padding:10px;
+      border:1px solid var(--border);
+      background: rgba(12,23,46,.55);
+      border-radius:14px;
+    }
+    .label{ font-size:12px; color:var(--muted); margin-right:2px; }
 
-    .net-controls { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; align-items:center; font-size:12px; }
-    .net-controls input { padding:5px 10px; border-radius:9999px; border:1px solid #4b5563; background:#111827; color:#f9fafb; font-size:12px; width:110px; }
-    .badge { padding:4px 8px; border-radius:9999px; border:1px solid #6b7280; font-size:11px; color:#e5e7eb; white-space:nowrap; }
+    input{
+      padding:8px 10px; border-radius:9999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-size:12px;
+      outline:none;
+      width: 120px;
+    }
+    input:focus{
+      border-color: rgba(249,115,22,.55);
+      box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+    }
+
+    .badge{
+      padding:6px 10px;
+      border-radius:9999px;
+      border:1px solid rgba(255,255,255,.14);
+      font-size:12px; color:rgba(255,255,255,.85);
+      white-space:nowrap;
+      background: rgba(0,0,0,.18);
+    }
+
+    .btn{
+      padding:8px 12px;
+      border-radius:9999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight:700;
+      cursor:pointer;
+      font-size:12px;
+      transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(249,115,22,.45); }
+    .btn:active{ transform: translateY(0px); }
+    .btn-primary{
+      background: linear-gradient(180deg, rgba(249,115,22,.95), rgba(249,115,22,.80));
+      border-color: rgba(249,115,22,.85);
+      color:#0b1220;
+      box-shadow: 0 8px 18px rgba(249,115,22,.18);
+    }
+    .btn-danger{
+      background: rgba(239,68,68,.18);
+      border-color: rgba(239,68,68,.35);
+    }
+
+    .statusline{
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: rgba(15,27,50,.55);
+      border-radius: 16px;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .info{ font-size:13px; color: rgba(255,255,255,.88); line-height:1.35; }
+    .status{ font-size:13px; color:#fbbf24; min-height:18px; }
+
+    /* plateau */
+    .boardWrap{
+      display:flex; flex-direction:column; gap:12px;
+      padding: 14px;
+      border:1px solid var(--border);
+      background: rgba(15,27,50,.55);
+      border-radius: 16px;
+    }
+
+    .boardTitleRow{
+      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .boardTitle{
+      font-size:13px; color: var(--muted);
+    }
+
+    .board{
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+      padding: 6px 0;
+    }
+    .pile-row{ display:flex; align-items:center; gap:10px; }
+
+    .base-card{
+      width:56px; height:84px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.16);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.90);
+      font-weight:900; font-size:16px;
+    }
+    .base-dir{ font-size:13px; margin-top:2px; color: rgba(255,255,255,.65); }
+
+    .pile-card{
+      width:70px; height:92px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight:900; font-size:18px;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition: transform .10s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease, filter .12s ease;
+      position:relative;
+      user-select:none;
+    }
+    .pile-card:hover{ transform: translateY(-2px); }
+    .pile-card:disabled{ opacity:.45; cursor:default; transform:none; box-shadow:none; }
+
+    /* Couleurs piles */
+    .pile-up{
+      border-color: rgba(34,197,94,.35);
+      background: linear-gradient(180deg, rgba(34,197,94,.22), rgba(0,0,0,.18));
+    }
+    .pile-down{
+      border-color: rgba(239,68,68,.35);
+      background: linear-gradient(180deg, rgba(239,68,68,.22), rgba(0,0,0,.18));
+    }
+
+    /* Surbrillance jouable / non jouable */
+    .pile-card.playable{
+      box-shadow: var(--glow);
+      border-color: rgba(249,115,22,.70);
+      filter: saturate(1.15) brightness(1.05);
+    }
+    .pile-card.not-playable{
+      opacity:.35;
+      filter: grayscale(.35) brightness(.90);
+    }
+
+    /* main */
+    .handWrap{
+      padding: 14px;
+      border:1px solid var(--border);
+      background: rgba(15,27,50,.55);
+      border-radius:16px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .handTitleRow{
+      display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .hand-title{ margin:0; font-size:13px; color: var(--muted); }
+    .hint{ font-size:12px; color: rgba(255,255,255,.70); }
+
+    .hand{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+
+    .hand-card{
+      width:64px; height:96px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight:900; font-size:20px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      transition: transform .10s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+      user-select:none;
+      position:relative;
+    }
+    .hand-card:hover{
+      transform: translateY(-3px);
+      border-color: rgba(249,115,22,.55);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    }
+    .hand-card.selected{
+      border-color: rgba(249,115,22,.85);
+      box-shadow: var(--glow);
+      background: rgba(249,115,22,.10);
+      transform: translateY(-6px) rotate(-2deg);
+    }
+    .hand-card.disabled{ opacity:.45; cursor:default; transform:none; box-shadow:none; }
+
+    /* zone actions */
+    .controls{
+      display:flex; justify-content:center; gap:10px; flex-wrap:wrap;
+      margin-top: 2px;
+    }
+
+    /* animation carte */
+    .flying-card{
+      position: fixed;
+      z-index: 9999;
+      width:64px; height:96px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight:900; font-size:20px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+      pointer-events:none;
+      transform: translate3d(0,0,0);
+      will-change: transform, opacity;
+    }
+
+    /* écran fin de partie */
+    .overlay{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 10000;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width: min(520px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.16);
+      background: linear-gradient(180deg, rgba(15,27,50,.95), rgba(12,23,46,.92));
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      padding: 18px;
+      display:flex; flex-direction:column; gap:12px;
+    }
+    .modal h2{ margin:0; font-size:18px; }
+    .modal p{ margin:0; color: rgba(255,255,255,.82); line-height:1.4; font-size:13px; }
+    .modal .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .statGrid{
+      display:grid; grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .stat{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      border-radius: 14px;
+      padding: 10px;
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .stat .k{ font-size:12px; color: rgba(255,255,255,.70); }
+    .stat .v{ font-size:16px; font-weight:900; }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>The Game – Solo & Multijoueur</h1>
-    <div class="subtitle">Piles au centre, main par joueur, deck commun.</div>
 
-    <div class="net-controls">
-      <span id="mode-badge" class="badge">Mode : solo local</span>
-
-      <input id="name-input" type="text" maxlength="12" placeholder="Pseudo" />
-      <button id="btn-save-name" class="btn">Valider pseudo</button>
-
-      <button id="btn-solo" class="btn">Mode solo</button>
-      <button id="btn-create-online" class="btn">Créer partie</button>
-      <input id="join-code-input" type="text" maxlength="6" placeholder="Code" />
-      <button id="btn-join-online" class="btn">Rejoindre</button>
-
-      <span id="room-info" class="badge"></span>
-      <span id="turn-badge" class="badge"></span>
+    <div class="header">
+      <h1>The Game – Solo & Multijoueur</h1>
+      <div class="subtitle">Piles au centre, main par joueur, deck commun.</div>
     </div>
 
-    <div id="info" class="info"></div>
-    <div id="status" class="status"></div>
+    <!-- PARAMÈTRES (détachés du plateau) -->
+    <div class="setup">
+      <div class="group">
+        <span class="badge" id="mode-badge">Mode : solo local</span>
+        <span class="badge" id="room-info"></span>
+        <span class="badge" id="turn-badge"></span>
+      </div>
 
-    <div class="board">
-      <div class="pile-row">
-        <div class="base-card">100<div class="base-dir">↓</div></div>
-        <button class="pile-card" id="pile-0">100</button>
+      <div class="group">
+        <span class="label">Pseudo</span>
+        <input id="name-input" type="text" maxlength="12" placeholder="Pseudo" />
+        <button id="btn-save-name" class="btn">Valider</button>
       </div>
-      <div class="pile-row">
-        <div class="base-card">100<div class="base-dir">↓</div></div>
-        <button class="pile-card" id="pile-1">100</button>
-      </div>
-      <div class="pile-row">
-        <div class="base-card">1<div class="base-dir">↑</div></div>
-        <button class="pile-card" id="pile-2">1</button>
-      </div>
-      <div class="pile-row">
-        <div class="base-card">1<div class="base-dir">↑</div></div>
-        <button class="pile-card" id="pile-3">1</button>
+
+      <div class="group">
+        <button id="btn-solo" class="btn">Mode solo</button>
+        <button id="btn-create-online" class="btn">Créer partie</button>
+        <input id="join-code-input" type="text" maxlength="6" placeholder="Code" />
+        <button id="btn-join-online" class="btn">Rejoindre</button>
       </div>
     </div>
 
-    <div class="separator"></div>
+    <div class="statusline">
+      <div id="info" class="info"></div>
+      <div id="status" class="status"></div>
+    </div>
 
-    <div class="hand-title">Ta main</div>
-    <div id="hand" class="hand"></div>
+    <!-- PLATEAU -->
+    <div class="boardWrap">
+      <div class="boardTitleRow">
+        <div class="boardTitle">Plateau</div>
+        <div class="hint" id="play-hint">Sélectionne une carte puis clique sur une pile.</div>
+      </div>
 
-    <div class="controls">
-      <button id="new-game" class="btn">Reset</button>
-      <button id="end-turn" class="btn btn-primary">Finir tour</button>
+      <div class="board">
+        <div class="pile-row">
+          <div class="base-card">100<div class="base-dir">↓</div></div>
+          <button class="pile-card pile-down" id="pile-0">100</button>
+        </div>
+        <div class="pile-row">
+          <div class="base-card">100<div class="base-dir">↓</div></div>
+          <button class="pile-card pile-down" id="pile-1">100</button>
+        </div>
+        <div class="pile-row">
+          <div class="base-card">1<div class="base-dir">↑</div></div>
+          <button class="pile-card pile-up" id="pile-2">1</button>
+        </div>
+        <div class="pile-row">
+          <div class="base-card">1<div class="base-dir">↑</div></div>
+          <button class="pile-card pile-up" id="pile-3">1</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="new-game" class="btn btn-danger">Reset</button>
+        <button id="end-turn" class="btn btn-primary">Finir tour</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="handWrap">
+      <div class="handTitleRow">
+        <div class="hand-title">Ta main</div>
+        <div class="hint">Les piles jouables se surlignent quand tu sélectionnes une carte.</div>
+      </div>
+      <div id="hand" class="hand"></div>
+    </div>
+  </div>
+
+  <!-- FIN DE PARTIE -->
+  <div id="end-overlay" class="overlay">
+    <div class="modal">
+      <h2 id="end-title">Bravo !</h2>
+      <p id="end-text">Partie terminée.</p>
+
+      <div class="statGrid">
+        <div class="stat">
+          <div class="k">Deck restant</div>
+          <div class="v" id="end-deck">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Total restant (deck + mains)</div>
+          <div class="v" id="end-total">0</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="btn-video" class="btn">Voir la vidéo “Bravo”</button>
+        <button id="btn-close-end" class="btn">Fermer</button>
+        <button id="btn-replay" class="btn btn-primary">Rejouer</button>
+      </div>
     </div>
   </div>
 
@@ -117,10 +423,11 @@
     /******** CONSTANTES ********/
     const HAND_SIZE = 8;
     const MIN_PLAYS_PER_TURN = 2;
+    const BRAVO_VIDEO_URL = "https://youtu.be/I2YhWaUDtXg?si=ijeNEmaf2hXkSL2j";
 
     /******** ETAT APP ********/
     let mode = "solo"; // "solo" | "online"
-    let state = null;  // état de jeu (unique pour solo & online)
+    let state = null;  // état de jeu unique
     let selectedIndex = null;
 
     let localPlayerId = localStorage.getItem("thegame_player_id");
@@ -136,7 +443,10 @@
     let currentRoomCode = null;
     let roomRef = null;
     let unsubscribeRoom = null;
-    let lastRoomData = null; // pour afficher les pseudos
+    let lastRoomData = null;
+
+    // pour animation
+    let lastSelectedCardEl = null;
 
     /******** UI helpers ********/
     function setStatus(t){ document.getElementById("status").innerText = t || ""; }
@@ -160,7 +470,7 @@
       el.textContent = "C'est à " + getPlayerName(state.currentPlayerId) + " de jouer";
     }
 
-    /******** MOTEUR (UNIQUE) ********/
+    /******** MOTEUR ********/
     const sortAsc = (a)=> Array.isArray(a) ? a.sort((x,y)=>x-y) : a;
 
     function canPlay(pile, card){
@@ -276,7 +586,7 @@
       return { ok:true, msg:"Tour terminé." };
     }
 
-    /******** STOCKAGE (UNIQUE API) ********/
+    /******** STOCKAGE ********/
     async function loadState(){
       if(mode === "solo") return state;
       if(!roomRef) return null;
@@ -286,13 +596,12 @@
     }
 
     async function saveState(st){
-      state = st; // toujours mettre à jour la RAM
+      state = st;
       if(mode === "solo") return;
       if(!roomRef) return;
       await roomRef.update({ game: st });
     }
 
-    /******** MULTI: subscribe ********/
     function subscribeRoom(code){
       if(!db) return;
       if(unsubscribeRoom) unsubscribeRoom();
@@ -334,7 +643,9 @@
       mode = "solo";
       state = newGameState(localPlayerId);
       selectedIndex = null;
+      lastSelectedCardEl = null;
       setStatus("Mode solo.");
+      hideEndScreen();
       render();
     }
 
@@ -358,6 +669,7 @@
       });
 
       setStatus("Partie créée. Code : " + code);
+      hideEndScreen();
       subscribeRoom(code);
     }
 
@@ -372,7 +684,6 @@
       const snap = await ref.get();
       if(!snap.exists) return setStatus("Partie introuvable.");
 
-      // Mise à jour players + intégration dans l'état (ordre + main)
       const data = snap.data() || {};
       const st = data.game || newGameState(localPlayerId);
 
@@ -387,10 +698,74 @@
       mode = "online";
       currentRoomCode = code;
       setStatus("Rejoint " + code);
+      hideEndScreen();
       subscribeRoom(code);
     }
 
-    /******** UI actions (Play / End Turn) ********/
+    /******** ANIMATION ********/
+    function animatePlay(cardEl, pileBtn, cardValue){
+      if(!cardEl || !pileBtn) return;
+
+      const from = cardEl.getBoundingClientRect();
+      const to = pileBtn.getBoundingClientRect();
+
+      const fly = document.createElement("div");
+      fly.className = "flying-card";
+      fly.textContent = cardValue;
+
+      fly.style.left = from.left + "px";
+      fly.style.top = from.top + "px";
+      fly.style.width = from.width + "px";
+      fly.style.height = from.height + "px";
+
+      document.body.appendChild(fly);
+
+      const dx = (to.left + to.width/2) - (from.left + from.width/2);
+      const dy = (to.top + to.height/2) - (from.top + from.height/2);
+
+      // pulse pile
+      pileBtn.classList.add("playable");
+      setTimeout(()=>pileBtn.classList.remove("playable"), 220);
+
+      requestAnimationFrame(()=>{
+        fly.style.transition = "transform 220ms ease, opacity 220ms ease";
+        fly.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(.92)`;
+        fly.style.opacity = "0.15";
+      });
+
+      setTimeout(()=>fly.remove(), 260);
+    }
+
+    /******** FIN DE PARTIE ********/
+    function showEndScreen(){
+      const overlay = document.getElementById("end-overlay");
+      if(!overlay) return;
+
+      document.getElementById("end-deck").innerText = String(state?.deck?.length || 0);
+      document.getElementById("end-total").innerText = String(state ? totalRemaining(state) : 0);
+
+      document.getElementById("end-title").innerText = "Félicitations !";
+      document.getElementById("end-text").innerText =
+        "Vous avez joué toutes les cartes. Bravo, performance parfaite.";
+
+      overlay.classList.add("show");
+    }
+
+    function hideEndScreen(){
+      document.getElementById("end-overlay")?.classList.remove("show");
+    }
+
+    document.getElementById("btn-video").onclick = ()=>{
+      // fiable (clic utilisateur)
+      window.open(BRAVO_VIDEO_URL, "_blank", "noopener,noreferrer");
+    };
+    document.getElementById("btn-close-end").onclick = hideEndScreen;
+    document.getElementById("btn-replay").onclick = ()=>{
+      // pragmatique : on relance en solo (stable et immédiat)
+      startSolo();
+    };
+
+    /******** ACTIONS JEU ********/
     async function onPileClick(pileIdx){
       if(!state) return setStatus("Clique sur Reset ou crée/rejoins une partie.");
 
@@ -398,11 +773,22 @@
       const st = (mode==="solo") ? state : await loadState();
       if(!st) return setStatus("État introuvable.");
 
+      ensure(st, localPlayerId);
+      const hand = st.hands[localPlayerId];
+      sortAsc(hand);
+
+      const cardValue = hand[selectedIndex];
+      const pileBtn = document.getElementById("pile-"+pileIdx);
+
       const res = applyPlay(st, localPlayerId, selectedIndex, pileIdx);
       setStatus(res.msg);
 
       if(res.ok){
+        // animation avant render
+        animatePlay(lastSelectedCardEl, pileBtn, cardValue);
+
         selectedIndex = null;
+        lastSelectedCardEl = null;
         await saveState(st);
       }
       render();
@@ -428,13 +814,14 @@
 
       if(!state){
         setInfo("Clique sur Reset ou crée/rejoins une partie.");
-        // reset UI piles/hand
         for(let i=0;i<4;i++){
           const btn=document.getElementById("pile-"+i);
           btn.textContent = (i<2) ? "100" : "1";
           btn.disabled = true;
+          btn.classList.remove("playable","not-playable");
         }
         document.getElementById("hand").innerHTML = "";
+        hideEndScreen();
         return;
       }
 
@@ -448,47 +835,71 @@
       const totalCount = totalRemaining(state);
       const plays = state.playsThisTurnByPlayer?.[localPlayerId] ?? 0;
 
+      const myTurn = isMyTurn(state, localPlayerId);
+      const disableBoard = state.gameOver || (mode==="online" && !myTurn);
+
       let extra = "";
       if(mode==="online" && state.currentPlayerId){
         extra += "<br/><i>C'est à <b>"+getPlayerName(state.currentPlayerId)+"</b> de jouer.</i>";
-        if(isMyTurn(state, localPlayerId)){
-          extra += "<br/><i>Coups joués ce tour : <b>"+plays+"</b> / "+MIN_PLAYS_PER_TURN+"</i>";
-        }
-      } else {
-        extra += "<br/><i>Coups joués ce tour : <b>"+plays+"</b> / "+MIN_PLAYS_PER_TURN+"</i>";
       }
+      extra += "<br/><i>Coups joués ce tour : <b>"+plays+"</b> / "+MIN_PLAYS_PER_TURN+"</i>";
 
       setInfo(
-        "Deck (reste à piocher) : <b>"+deckCount+
-        "</b> — Total restant (deck+mains) : <b>"+totalCount+
+        "Deck : <b>"+deckCount+
+        "</b> — Total restant : <b>"+totalCount+
         "</b> — Ta main : <b>"+hand.length+
         "</b><br/>Carte sélectionnée : "+
         (selectedIndex!=null ? "<b>"+hand[selectedIndex]+"</b>" : "<i>Aucune</i>") +
         extra
       );
 
-      const disableBoard = state.gameOver || (mode==="online" && !isMyTurn(state, localPlayerId));
+      // Piles: texte + désactivation + mise en évidence jouable
+      const selectedCard = (selectedIndex!=null) ? hand[selectedIndex] : null;
 
       for(let i=0;i<4;i++){
         const btn=document.getElementById("pile-"+i);
         btn.textContent = state.piles[i].value;
         btn.disabled = disableBoard;
+
+        btn.classList.remove("playable","not-playable");
+        if(!disableBoard && selectedCard != null){
+          const ok = canPlay(state.piles[i], selectedCard);
+          btn.classList.add(ok ? "playable" : "not-playable");
+        }
       }
 
-      const handDiv=document.getElementById("hand");
-      handDiv.innerHTML="";
+      // Main
+      const handDiv = document.getElementById("hand");
+      handDiv.innerHTML = "";
+
       hand.forEach((c,i)=>{
-        const el=document.createElement("div");
-        el.className="hand-card"+(selectedIndex===i?" selected":"");
+        const el = document.createElement("div");
+        el.className = "hand-card" + (selectedIndex===i ? " selected" : "");
+        el.textContent = c;
+        el.dataset.idx = i;
+
         if(disableBoard) el.classList.add("disabled");
-        el.textContent=c;
-        el.onclick=()=>{
+
+        el.onclick = ()=>{
           if(disableBoard) return setStatus("Action impossible (tour/adversaire/partie finie).");
-          selectedIndex=(selectedIndex===i?null:i);
+          if(selectedIndex === i){
+            selectedIndex = null;
+            lastSelectedCardEl = null;
+          } else {
+            selectedIndex = i;
+            lastSelectedCardEl = el;
+          }
           render();
         };
         handDiv.appendChild(el);
       });
+
+      // fin de partie
+      if(state.gameOver){
+        showEndScreen();
+      } else {
+        hideEndScreen();
+      }
     }
 
     /******** EVENTS ********/
@@ -498,12 +909,14 @@
 
     document.getElementById("new-game").onclick = ()=>{
       if(mode==="online"){
-        // En multijoueur, on évite de reset la room (sinon grief). On repasse en solo.
+        // pragmatique : on repasse en solo (évite grief sur room)
         startSolo();
       } else {
         state = newGameState(localPlayerId);
         selectedIndex = null;
+        lastSelectedCardEl = null;
         setStatus("Reset.");
+        hideEndScreen();
         render();
       }
     };
@@ -514,7 +927,7 @@
       document.getElementById("pile-"+i).onclick = ()=>onPileClick(i);
     }
 
-    // démarrage: si pas de state, affiche message
+    // init
     render();
   </script>
 </body>
