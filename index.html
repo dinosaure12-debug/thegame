@@ -10,226 +10,38 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: #f9fafb;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    body { margin:0; font-family: Arial, sans-serif; background:#111827; color:#f9fafb; display:flex; flex-direction:column; align-items:center; }
+    h1 { margin-top:16px; margin-bottom:4px; font-size:20px; text-align:center; }
+    .subtitle { font-size:13px; color:#e5e7eb; margin-bottom:10px; text-align:center; }
+    .container { max-width:900px; width:100%; padding:0 10px 24px 10px; box-sizing:border-box; }
+    .info { font-size:13px; margin-bottom:6px; min-height:32px; }
+    .status { margin-top:4px; margin-bottom:12px; min-height:24px; font-size:13px; color:#fbbf24; }
 
-    h1 {
-      margin-top: 16px;
-      margin-bottom: 4px;
-      font-size: 20px;
-      text-align: center;
-    }
+    .board { margin-top:10px; margin-bottom:20px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .pile-row { display:flex; align-items:center; gap:8px; }
+    .base-card { width:52px; height:78px; border-radius:6px; border:2px solid #9ca3af; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#111827; color:#f9fafb; font-weight:700; font-size:16px; }
+    .base-dir { font-size:14px; margin-top:2px; color:#9ca3af; }
 
-    .subtitle {
-      font-size: 13px;
-      color: #e5e7eb;
-      margin-bottom: 10px;
-      text-align: center;
-    }
+    .pile-card { width:52px; height:78px; border-radius:6px; border:none; background:#4b5563; color:#f9fafb; font-weight:700; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform .1s ease, box-shadow .1s ease, background .1s ease; }
+    .pile-card:hover { transform: translateY(-2px); box-shadow:0 4px 10px rgba(0,0,0,.4); background:#6b7280; }
+    .pile-card:disabled { opacity:.4; cursor:default; transform:none; box-shadow:none; }
 
-    .container {
-      max-width: 900px;
-      width: 100%;
-      padding: 0 10px 24px 10px;
-      box-sizing: border-box;
-    }
+    .separator { width:100%; height:1px; background:#374151; margin:12px 0; }
+    .hand-title { margin-bottom:6px; font-size:14px; }
+    .hand { display:flex; justify-content:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
 
-    .info {
-      font-size: 13px;
-      margin-bottom: 6px;
-      min-height: 32px;
-    }
+    .hand-card { width:60px; height:90px; border-radius:8px; border:2px solid #9ca3af; background:#111827; color:#f9fafb; font-weight:700; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform .1s ease, box-shadow .1s ease, border-color .1s ease, background .1s ease; }
+    .hand-card:hover { transform: translateY(-3px); box-shadow:0 5px 10px rgba(0,0,0,.5); border-color:#f97316; }
+    .hand-card.selected { border-color:#f97316; background:#1f2937; transform: translateY(-5px); box-shadow:0 7px 12px rgba(0,0,0,.6); }
+    .hand-card.disabled { opacity:.4; cursor:default; transform:none; box-shadow:none; }
 
-    .status {
-      margin-top: 4px;
-      margin-bottom: 12px;
-      min-height: 24px;
-      font-size: 13px;
-      color: #fbbf24;
-    }
+    .controls { display:flex; justify-content:center; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+    .btn { padding:6px 12px; border-radius:9999px; border:1px solid #9ca3af; background:#111827; color:#f9fafb; font-weight:600; cursor:pointer; font-size:12px; transition: background .1s ease, transform .1s ease, box-shadow .1s ease; }
+    .btn-primary { background:#f97316; border-color:#f97316; color:#111827; }
 
-    .board {
-      margin-top: 10px;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .pile-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .base-card {
-      width: 52px;
-      height: 78px;
-      border-radius: 6px;
-      border: 2px solid #9ca3af;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #111827;
-      color: #f9fafb;
-      font-weight: 700;
-      font-size: 16px;
-    }
-
-    .base-dir {
-      font-size: 14px;
-      margin-top: 2px;
-      color: #9ca3af;
-    }
-
-    .pile-card {
-      width: 52px;
-      height: 78px;
-      border-radius: 6px;
-      border: none;
-      background: #4b5563;
-      color: #f9fafb;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-    }
-
-    .pile-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      background: #6b7280;
-    }
-
-    .pile-card:disabled {
-      opacity: 0.4;
-      cursor: default;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .separator {
-      width: 100%;
-      height: 1px;
-      background: #374151;
-      margin: 12px 0;
-    }
-
-    .hand-title {
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-
-    .hand {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .hand-card {
-      width: 60px;
-      height: 90px;
-      border-radius: 8px;
-      border: 2px solid #9ca3af;
-      background: #111827;
-      color: #f9fafb;
-      font-weight: 700;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease,
-                  background 0.1s ease;
-    }
-
-    .hand-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 10px rgba(0,0,0,0.5);
-      border-color: #f97316;
-    }
-
-    .hand-card.selected {
-      border-color: #f97316;
-      background: #1f2937;
-      transform: translateY(-5px);
-      box-shadow: 0 7px 12px rgba(0,0,0,0.6);
-    }
-
-    .hand-card.disabled {
-      opacity: 0.4;
-      cursor: default;
-      transform: none;
-      box-shadow: none;
-    }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 6px 12px;
-      border-radius: 9999px;
-      border: 1px solid #9ca3af;
-      background: #111827;
-      color: #f9fafb;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease;
-    }
-
-    .btn-primary {
-      background: #f97316;
-      border-color: #f97316;
-      color: #111827;
-    }
-
-    .net-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 10px;
-      align-items: center;
-      font-size: 12px;
-    }
-
-    .net-controls input {
-      padding: 5px 10px;
-      border-radius: 9999px;
-      border: 1px solid #4b5563;
-      background: #111827;
-      color: #f9fafb;
-      font-size: 12px;
-      width: 100px;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 9999px;
-      border: 1px solid #6b7280;
-      font-size: 11px;
-      color: #e5e7eb;
-      white-space: nowrap;
-    }
+    .net-controls { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; align-items:center; font-size:12px; }
+    .net-controls input { padding:5px 10px; border-radius:9999px; border:1px solid #4b5563; background:#111827; color:#f9fafb; font-size:12px; width:110px; }
+    .badge { padding:4px 8px; border-radius:9999px; border:1px solid #6b7280; font-size:11px; color:#e5e7eb; white-space:nowrap; }
   </style>
 </head>
 
@@ -240,11 +52,17 @@
 
     <div class="net-controls">
       <span id="mode-badge" class="badge">Mode : solo local</span>
+
+      <input id="name-input" type="text" maxlength="12" placeholder="Pseudo" />
+      <button id="btn-save-name" class="btn">Valider pseudo</button>
+
       <button id="btn-solo" class="btn">Mode solo</button>
       <button id="btn-create-online" class="btn">Créer partie</button>
       <input id="join-code-input" type="text" maxlength="6" placeholder="Code" />
       <button id="btn-join-online" class="btn">Rejoindre</button>
+
       <span id="room-info" class="badge"></span>
+      <span id="turn-badge" class="badge"></span>
     </div>
 
     <div id="info" class="info"></div>
@@ -276,11 +94,12 @@
 
     <div class="controls">
       <button id="new-game" class="btn">Reset</button>
-      <button id="end-turn" class="btn btn-primary">Finir tour / Piocher</button>
+      <button id="end-turn" class="btn btn-primary">Finir tour</button>
     </div>
   </div>
 
   <script>
+    /******** FIREBASE ********/
     const firebaseConfig = {
       apiKey: "AIzaSyCRRVuWD29vt6qgp1iEBfPha-mNRQO2C54",
       authDomain: "the-game-80e93.firebaseapp.com",
@@ -295,11 +114,13 @@
     catch(e){ console.warn("Firebase error:", e); firebaseAvailable = false; }
     const db = firebaseAvailable ? firebase.firestore() : null;
 
+    /******** CONSTANTES ********/
     const HAND_SIZE = 8;
     const MIN_PLAYS_PER_TURN = 2;
 
-    let mode = "solo";
-    let game = null;
+    /******** ETAT APP ********/
+    let mode = "solo"; // "solo" | "online"
+    let state = null;  // état de jeu (unique pour solo & online)
     let selectedIndex = null;
 
     let localPlayerId = localStorage.getItem("thegame_player_id");
@@ -308,205 +129,350 @@
       localStorage.setItem("thegame_player_id",localPlayerId);
     }
 
+    let localName = localStorage.getItem("thegame_name") || "";
+    const nameInput = document.getElementById("name-input");
+    nameInput.value = localName;
+
     let currentRoomCode = null;
+    let roomRef = null;
     let unsubscribeRoom = null;
+    let lastRoomData = null; // pour afficher les pseudos
 
-    function sortHandAscending(hand) {
-      if (Array.isArray(hand)) hand.sort((a,b)=>a-b);
-    }
-
-    function createNewGameState(){
-      const deck=[];
-      for(let i=2;i<=99;i++) deck.push(i);
-      for(let i=deck.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [deck[i],deck[j]]=[deck[j],deck[i]];
-      }
-      const piles=[
-        {value:100,ascending:false},
-        {value:100,ascending:false},
-        {value:1,ascending:true},
-        {value:1,ascending:true}
-      ];
-      const hand=[];
-      while(hand.length<HAND_SIZE && deck.length>0) hand.push(deck.pop());
-      sortHandAscending(hand);
-      return {deck,piles,hand,turn:1,playsThisTurn:0,gameOver:false};
-    }
-
-    function createNewOnlineGameState(){
-      const deck=[];
-      for(let i=2;i<=99;i++) deck.push(i);
-      for(let i=deck.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [deck[i],deck[j]]=[deck[j],deck[i]];
-      }
-      const piles=[
-        {value:100,ascending:false},
-        {value:100,ascending:false},
-        {value:1,ascending:true},
-        {value:1,ascending:true}
-      ];
-      return {
-        deck,
-        piles,
-        hands:{},
-        gameOver:false,
-        playerOrder:[],
-        currentPlayerId:null
-      };
-    }
-
-    function canPlay(pile,card){
-      const v=pile.value;
-      return pile.ascending ? (card>v || card===v-10) : (card<v || card===v+10);
-    }
-
-    function ensureHand(state, playerId){
-      if(!state.hands) state.hands={};
-      if(!state.hands[playerId]) state.hands[playerId]=[];
-      return state.hands[playerId];
-    }
-
-    function allHandsEmpty(state){
-      if(!state.hands) return true;
-      return Object.values(state.hands).every(h=>!h || h.length===0);
-    }
-
-    function drawUpToHandFromDeck(state, hand, size){
-      while(hand.length<size && state.deck.length>0) hand.push(state.deck.pop());
-      sortHandAscending(hand);
-    }
-
-    function drawUpTo(state,size){
-      drawUpToHandFromDeck(state, state.hand, size);
-    }
-
-    function hasAnyLegalMove(state){
-      return state.hand.some(c=>state.piles.some(p=>canPlay(p,c)));
-    }
-
-    function playOneCardOnState(state,handIdx,pileIdx){
-      if(state.gameOver) return "La partie est terminée.";
-      if(handIdx<0||handIdx>=state.hand.length) return "Index carte invalide.";
-      const card=state.hand[handIdx];
-      const pile=state.piles[pileIdx];
-      if(!canPlay(pile,card)) return "Coup illégal.";
-      pile.value=card;
-      state.hand.splice(handIdx,1);
-      state.playsThisTurn+=1;
-      if(state.hand.length===0 && state.deck.length===0){
-        state.gameOver=true; return "Victoire parfaite.";
-      }
-      return "OK";
-    }
-
-    function endTurnOnState(state){
-      if(state.gameOver) return "Terminé.";
-      if(state.deck.length>0 && state.playsThisTurn<MIN_PLAYS_PER_TURN)
-        return "Tu dois jouer 2 cartes avant de finir le tour.";
-      if(state.deck.length>0) drawUpTo(state,HAND_SIZE);
-      state.playsThisTurn=0;
-      state.turn+=1;
-      if(state.hand.length===0 && state.deck.length===0){
-        state.gameOver=true; return "Victoire parfaite.";
-      }
-      if(!hasAnyLegalMove(state)){
-        state.gameOver=true; return "Bloqué.";
-      }
-      return "Tour "+state.turn;
-    }
-
-    function playOneCardOnlineOnState(state, playerId, handIdx, pileIdx){
-      if(state.gameOver) return "La partie est terminée.";
-      if(state.currentPlayerId && state.currentPlayerId !== playerId) return "Ce n'est pas ton tour.";
-
-      const hand = ensureHand(state, playerId);
-      if(handIdx<0 || handIdx>=hand.length) return "Index carte invalide.";
-      const card = hand[handIdx];
-      const pile = state.piles[pileIdx];
-      if(!canPlay(pile,card)) return "Coup illégal.";
-      pile.value = card;
-      hand.splice(handIdx,1);
-
-      if(state.deck.length===0 && allHandsEmpty(state)){
-        state.gameOver=true; return "Toutes les cartes ont été jouées.";
-      }
-      return "OK";
-    }
-
-    function endTurnOnlineOnState(state, playerId){
-      if(state.gameOver) return "La partie est terminée.";
-      if(state.currentPlayerId && state.currentPlayerId !== playerId) return "Ce n'est pas ton tour.";
-
-      const hand = ensureHand(state, playerId);
-      drawUpToHandFromDeck(state, hand, HAND_SIZE);
-
-      if(state.deck.length===0 && allHandsEmpty(state)){
-        state.gameOver=true; return "Toutes les cartes ont été jouées.";
-      }
-
-      const order = state.playerOrder || [];
-      if(order.length>0){
-        let idx = order.indexOf(playerId);
-        if(idx === -1){
-          order.push(playerId);
-          idx = order.length - 1;
-        }
-        state.currentPlayerId = order[(idx + 1) % order.length];
-      }
-
-      return "Tu as pioché. Tour du joueur suivant.";
-    }
-
-    function setStatus(t){ document.getElementById("status").innerText=t; }
-    function setInfo(t){ document.getElementById("info").innerHTML=t; }
+    /******** UI helpers ********/
+    function setStatus(t){ document.getElementById("status").innerText = t || ""; }
+    function setInfo(t){ document.getElementById("info").innerHTML = t || ""; }
 
     function updateModeBadge(){
-      const badge=document.getElementById("mode-badge");
-      badge.textContent = (mode==="solo") ? "Mode : solo local" : "Mode : multijoueur";
+      document.getElementById("mode-badge").textContent =
+        (mode==="solo") ? "Mode : solo local" : "Mode : multijoueur";
     }
-
     function updateRoomInfo(){
-      const el=document.getElementById("room-info");
-      el.textContent = (mode==="online" && currentRoomCode) ? ("Partie : "+currentRoomCode) : "";
+      document.getElementById("room-info").textContent =
+        (mode==="online" && currentRoomCode) ? ("Partie : "+currentRoomCode) : "";
+    }
+    function getPlayerName(pid){
+      const p = lastRoomData?.players?.[pid];
+      return (p?.name) ? p.name : pid.slice(-4);
+    }
+    function updateTurnBadge(){
+      const el = document.getElementById("turn-badge");
+      if(mode!=="online" || !state?.currentPlayerId){ el.textContent = ""; return; }
+      el.textContent = "C'est à " + getPlayerName(state.currentPlayerId) + " de jouer";
     }
 
-    function getCurrentHand(){
-      if(!game) return [];
-      if(mode==="online" && game.hands) return ensureHand(game, localPlayerId);
-      return game.hand || [];
+    /******** MOTEUR (UNIQUE) ********/
+    const sortAsc = (a)=> Array.isArray(a) ? a.sort((x,y)=>x-y) : a;
+
+    function canPlay(pile, card){
+      const v = pile.value;
+      return pile.ascending ? (card > v || card === v - 10)
+                            : (card < v || card === v + 10);
     }
 
+    function ensure(st, pid){
+      st.hands ??= {};
+      st.hands[pid] ??= [];
+      st.playsThisTurnByPlayer ??= {};
+      st.playsThisTurnByPlayer[pid] ??= 0;
+      st.playerOrder ??= [];
+      if(!st.playerOrder.includes(pid)) st.playerOrder.push(pid);
+      if(!st.currentPlayerId) st.currentPlayerId = st.playerOrder[0] || pid;
+      return st.hands[pid];
+    }
+
+    function totalRemaining(st){
+      const deck = st.deck?.length || 0;
+      const hands = Object.values(st.hands || {}).reduce((s,h)=>s+(h?.length||0),0);
+      return deck + hands;
+    }
+
+    function isMyTurn(st, pid){
+      return !st?.currentPlayerId || st.currentPlayerId === pid;
+    }
+
+    function nextPlayer(st, pid){
+      const order = st.playerOrder || [];
+      if(order.length === 0) return pid;
+      const idx = order.indexOf(pid);
+      return order[(idx + 1) % order.length];
+    }
+
+    function drawUpTo(st, pid, size){
+      const hand = ensure(st, pid);
+      while(hand.length < size && st.deck.length > 0) hand.push(st.deck.pop());
+      sortAsc(hand);
+    }
+
+    function newGameState(hostId){
+      const deck=[];
+      for(let i=2;i<=99;i++) deck.push(i); // 98 cartes
+      for(let i=deck.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [deck[i],deck[j]]=[deck[j],deck[i]];
+      }
+      const st = {
+        deck,
+        piles: [
+          {value:100, ascending:false},
+          {value:100, ascending:false},
+          {value:1,   ascending:true},
+          {value:1,   ascending:true}
+        ],
+        hands:{},
+        playerOrder:[hostId],
+        currentPlayerId:hostId,
+        playsThisTurnByPlayer:{ [hostId]: 0 },
+        gameOver:false
+      };
+      drawUpTo(st, hostId, HAND_SIZE);
+      return st;
+    }
+
+    function applyPlay(st, pid, handIdx, pileIdx){
+      if(st.gameOver) return { ok:false, msg:"Partie terminée." };
+      ensure(st, pid);
+
+      if(!isMyTurn(st, pid)) return { ok:false, msg:"Ce n'est pas ton tour." };
+
+      const hand = st.hands[pid];
+      sortAsc(hand);
+
+      if(handIdx < 0 || handIdx >= hand.length) return { ok:false, msg:"Index carte invalide." };
+      const pile = st.piles[pileIdx];
+      if(!pile) return { ok:false, msg:"Pile invalide." };
+
+      const card = hand[handIdx];
+      if(!canPlay(pile, card)) return { ok:false, msg:"Coup illégal." };
+
+      pile.value = card;
+      hand.splice(handIdx, 1);
+      st.playsThisTurnByPlayer[pid] += 1;
+
+      if(totalRemaining(st) === 0){
+        st.gameOver = true;
+        return { ok:true, msg:"Toutes les cartes ont été jouées." };
+      }
+      return { ok:true, msg:"OK" };
+    }
+
+    function applyEndTurn(st, pid){
+      if(st.gameOver) return { ok:false, msg:"Partie terminée." };
+      ensure(st, pid);
+
+      if(!isMyTurn(st, pid)) return { ok:false, msg:"Ce n'est pas ton tour." };
+
+      if(st.deck.length > 0 && st.playsThisTurnByPlayer[pid] < MIN_PLAYS_PER_TURN){
+        return { ok:false, msg:`Tu dois jouer ${MIN_PLAYS_PER_TURN} cartes avant de finir ton tour.` };
+      }
+
+      drawUpTo(st, pid, HAND_SIZE);
+      st.playsThisTurnByPlayer[pid] = 0;
+      st.currentPlayerId = nextPlayer(st, pid);
+
+      if(totalRemaining(st) === 0){
+        st.gameOver = true;
+        return { ok:true, msg:"Toutes les cartes ont été jouées." };
+      }
+      return { ok:true, msg:"Tour terminé." };
+    }
+
+    /******** STOCKAGE (UNIQUE API) ********/
+    async function loadState(){
+      if(mode === "solo") return state;
+      if(!roomRef) return null;
+      const snap = await roomRef.get();
+      lastRoomData = snap.data() || null;
+      return lastRoomData?.game || null;
+    }
+
+    async function saveState(st){
+      state = st; // toujours mettre à jour la RAM
+      if(mode === "solo") return;
+      if(!roomRef) return;
+      await roomRef.update({ game: st });
+    }
+
+    /******** MULTI: subscribe ********/
+    function subscribeRoom(code){
+      if(!db) return;
+      if(unsubscribeRoom) unsubscribeRoom();
+
+      roomRef = db.collection("rooms").doc(code);
+      unsubscribeRoom = roomRef.onSnapshot(s=>{
+        if(!s.exists){
+          setStatus("Partie introuvable / supprimée.");
+          return;
+        }
+        lastRoomData = s.data() || {};
+        state = lastRoomData.game || null;
+        render();
+      });
+    }
+
+    /******** PSEUDO ********/
+    function requireName(){
+      const n = (localName||"").trim();
+      if(n.length < 2){ setStatus("Choisis un pseudo (min 2 caractères)."); return false; }
+      return true;
+    }
+
+    document.getElementById("btn-save-name").onclick = ()=>{
+      localName = (nameInput.value || "").trim().slice(0,12);
+      localStorage.setItem("thegame_name", localName);
+      setStatus(localName ? ("Pseudo enregistré : " + localName) : "Pseudo supprimé.");
+      render();
+    };
+
+    /******** ACTIONS MODE ********/
+    function startSolo(){
+      if(unsubscribeRoom) unsubscribeRoom();
+      unsubscribeRoom = null;
+      roomRef = null;
+      currentRoomCode = null;
+      lastRoomData = null;
+
+      mode = "solo";
+      state = newGameState(localPlayerId);
+      selectedIndex = null;
+      setStatus("Mode solo.");
+      render();
+    }
+
+    async function createOnlineRoom(){
+      if(!db) return setStatus("Firebase indisponible.");
+      if(!requireName()) return;
+
+      const code = Math.random().toString(36).substring(2,6).toUpperCase();
+      currentRoomCode = code;
+      mode = "online";
+
+      const st = newGameState(localPlayerId);
+      const ref = db.collection("rooms").doc(code);
+
+      await ref.set({
+        code,
+        createdAt: Date.now(),
+        hostId: localPlayerId,
+        players: { [localPlayerId]: { joinedAt: Date.now(), name: localName } },
+        game: st
+      });
+
+      setStatus("Partie créée. Code : " + code);
+      subscribeRoom(code);
+    }
+
+    async function joinOnlineRoom(){
+      if(!db) return setStatus("Firebase indisponible.");
+      if(!requireName()) return;
+
+      const code = (document.getElementById("join-code-input").value || "").trim().toUpperCase();
+      if(!code) return setStatus("Saisis un code.");
+
+      const ref = db.collection("rooms").doc(code);
+      const snap = await ref.get();
+      if(!snap.exists) return setStatus("Partie introuvable.");
+
+      // Mise à jour players + intégration dans l'état (ordre + main)
+      const data = snap.data() || {};
+      const st = data.game || newGameState(localPlayerId);
+
+      ensure(st, localPlayerId);
+      if(st.hands[localPlayerId].length === 0) drawUpTo(st, localPlayerId, HAND_SIZE);
+
+      await ref.update({
+        ["players."+localPlayerId]: { joinedAt: Date.now(), name: localName },
+        game: st
+      });
+
+      mode = "online";
+      currentRoomCode = code;
+      setStatus("Rejoint " + code);
+      subscribeRoom(code);
+    }
+
+    /******** UI actions (Play / End Turn) ********/
+    async function onPileClick(pileIdx){
+      if(!state) return setStatus("Clique sur Reset ou crée/rejoins une partie.");
+
+      if(selectedIndex == null) return setStatus("Choisis une carte.");
+      const st = (mode==="solo") ? state : await loadState();
+      if(!st) return setStatus("État introuvable.");
+
+      const res = applyPlay(st, localPlayerId, selectedIndex, pileIdx);
+      setStatus(res.msg);
+
+      if(res.ok){
+        selectedIndex = null;
+        await saveState(st);
+      }
+      render();
+    }
+
+    async function onEndTurn(){
+      if(!state) return setStatus("Aucune partie.");
+      const st = (mode==="solo") ? state : await loadState();
+      if(!st) return setStatus("État introuvable.");
+
+      const res = applyEndTurn(st, localPlayerId);
+      setStatus(res.msg);
+
+      if(res.ok) await saveState(st);
+      render();
+    }
+
+    /******** RENDER ********/
     function render(){
-      if(!game){
+      updateModeBadge();
+      updateRoomInfo();
+      updateTurnBadge();
+
+      if(!state){
         setInfo("Clique sur Reset ou crée/rejoins une partie.");
+        // reset UI piles/hand
+        for(let i=0;i<4;i++){
+          const btn=document.getElementById("pile-"+i);
+          btn.textContent = (i<2) ? "100" : "1";
+          btn.disabled = true;
+        }
+        document.getElementById("hand").innerHTML = "";
         return;
       }
 
-      const hand = getCurrentHand();
-      sortHandAscending(hand);
-      if(selectedIndex!=null && selectedIndex>=hand.length) selectedIndex=null;
+      ensure(state, localPlayerId);
+      const hand = state.hands[localPlayerId];
+      sortAsc(hand);
 
-      const deckCount = game.deck ? game.deck.length : 0;
+      if(selectedIndex != null && selectedIndex >= hand.length) selectedIndex = null;
+
+      const deckCount = state.deck?.length || 0;
+      const totalCount = totalRemaining(state);
+      const plays = state.playsThisTurnByPlayer?.[localPlayerId] ?? 0;
 
       let extra = "";
-      if(mode==="online" && game.currentPlayerId){
-        extra = "<br/><i>" + (game.currentPlayerId===localPlayerId ? "C'est ton tour." : "Tour de l'autre joueur.") + "</i>";
+      if(mode==="online" && state.currentPlayerId){
+        extra += "<br/><i>C'est à <b>"+getPlayerName(state.currentPlayerId)+"</b> de jouer.</i>";
+        if(isMyTurn(state, localPlayerId)){
+          extra += "<br/><i>Coups joués ce tour : <b>"+plays+"</b> / "+MIN_PLAYS_PER_TURN+"</i>";
+        }
+      } else {
+        extra += "<br/><i>Coups joués ce tour : <b>"+plays+"</b> / "+MIN_PLAYS_PER_TURN+"</i>";
       }
 
       setInfo(
-        "Deck : <b>"+deckCount+
-        "</b> — Cartes dans ta main : <b>"+hand.length+
+        "Deck (reste à piocher) : <b>"+deckCount+
+        "</b> — Total restant (deck+mains) : <b>"+totalCount+
+        "</b> — Ta main : <b>"+hand.length+
         "</b><br/>Carte sélectionnée : "+
         (selectedIndex!=null ? "<b>"+hand[selectedIndex]+"</b>" : "<i>Aucune</i>") +
         extra
       );
 
+      const disableBoard = state.gameOver || (mode==="online" && !isMyTurn(state, localPlayerId));
+
       for(let i=0;i<4;i++){
         const btn=document.getElementById("pile-"+i);
-        btn.textContent=game.piles[i].value;
-        btn.disabled=game.gameOver;
+        btn.textContent = state.piles[i].value;
+        btn.disabled = disableBoard;
       }
 
       const handDiv=document.getElementById("hand");
@@ -514,10 +480,10 @@
       hand.forEach((c,i)=>{
         const el=document.createElement("div");
         el.className="hand-card"+(selectedIndex===i?" selected":"");
-        if(game.gameOver) el.classList.add("disabled");
+        if(disableBoard) el.classList.add("disabled");
         el.textContent=c;
         el.onclick=()=>{
-          if(game.gameOver) return;
+          if(disableBoard) return setStatus("Action impossible (tour/adversaire/partie finie).");
           selectedIndex=(selectedIndex===i?null:i);
           render();
         };
@@ -525,145 +491,31 @@
       });
     }
 
-    function startSolo(){
-      if(unsubscribeRoom) unsubscribeRoom();
-      mode="solo";
-      currentRoomCode=null;
-      game=createNewGameState();
-      selectedIndex=null;
-      updateModeBadge();
-      updateRoomInfo();
-      setStatus("Mode solo.");
-      render();
-    }
-
-    function subscribeRoom(code){
-      if(!db) return;
-      if(unsubscribeRoom) unsubscribeRoom();
-      unsubscribeRoom = db.collection("rooms").doc(code).onSnapshot(s=>{
-        if(!s.exists){ setStatus("Partie supprimée."); return; }
-        game = (s.data() || {}).game || null;
-        render();
-      });
-    }
-
-    async function createOnlineRoom(){
-      if(!db) return setStatus("Firebase indisponible.");
-      const code=Math.random().toString(36).substring(2,6).toUpperCase();
-      currentRoomCode=code;
-
-      const room=db.collection("rooms").doc(code);
-      const initial = createNewOnlineGameState();
-
-      const hostHand = ensureHand(initial, localPlayerId);
-      drawUpToHandFromDeck(initial, hostHand, HAND_SIZE);
-
-      initial.playerOrder = [localPlayerId];
-      initial.currentPlayerId = localPlayerId;
-
-      await room.set({
-        code,
-        createdAt:Date.now(),
-        hostId:localPlayerId,
-        players:{ [localPlayerId]:{joinedAt:Date.now()} },
-        game:initial
-      });
-
-      mode="online";
-      updateModeBadge();
-      updateRoomInfo();
-      subscribeRoom(code);
-      setStatus("Partie créée. Code : "+code);
-      render();
-    }
-
-    async function joinOnlineRoom(){
-      if(!db) return setStatus("Firebase indisponible.");
-      const code=document.getElementById("join-code-input").value.trim().toUpperCase();
-      if(!code) return setStatus("Saisis un code.");
-
-      const room=db.collection("rooms").doc(code);
-      const snap=await room.get();
-      if(!snap.exists) return setStatus("Partie introuvable.");
-
-      await room.update({ ["players."+localPlayerId]:{joinedAt:Date.now()} });
-
-      const snap2 = await room.get();
-      const data2 = snap2.data() || {};
-      const g = data2.game || {};
-
-      if(!g.playerOrder) g.playerOrder=[];
-      if(!g.playerOrder.includes(localPlayerId)) g.playerOrder.push(localPlayerId);
-
-      const hand = ensureHand(g, localPlayerId);
-      if(hand.length===0) drawUpToHandFromDeck(g, hand, HAND_SIZE);
-
-      await room.update({ game: g });
-
-      currentRoomCode=code;
-      mode="online";
-      updateModeBadge();
-      updateRoomInfo();
-      subscribeRoom(code);
-      setStatus("Rejoint "+code);
-    }
-
-    async function networkedPlayOneCard(i,p){
-      const hand = getCurrentHand();
-      if(!game || i==null || i<0 || i>=hand.length) return;
-
-      if(mode!=="online" || !currentRoomCode || !db || !game.hands){
-        const msg=playOneCardOnState(game,i,p);
-        setStatus(msg);
-        selectedIndex=null;
-        render();
-        return;
-      }
-
-      const newGame=JSON.parse(JSON.stringify(game));
-      const msg=playOneCardOnlineOnState(newGame, localPlayerId, i, p);
-      if(msg==="OK"){
-        await db.collection("rooms").doc(currentRoomCode).update({game:newGame});
-      }
-      setStatus(msg);
-      selectedIndex=null;
-    }
-
-    async function networkedEndTurn(){
-      if(!game) return;
-
-      if(mode!=="online" || !currentRoomCode || !db || !game.hands){
-        const msg=endTurnOnState(game);
-        setStatus(msg);
-        selectedIndex=null;
-        render();
-        return;
-      }
-
-      const newGame=JSON.parse(JSON.stringify(game));
-      const msg=endTurnOnlineOnState(newGame, localPlayerId);
-      if(msg!=="Ce n'est pas ton tour."){
-        await db.collection("rooms").doc(currentRoomCode).update({game:newGame});
-      }
-      setStatus(msg);
-      selectedIndex=null;
-    }
-
-    document.getElementById("new-game").onclick = startSolo;
-    document.getElementById("end-turn").onclick = networkedEndTurn;
-
-    for(let i=0;i<4;i++){
-      document.getElementById("pile-"+i).onclick = ()=>{
-        if(selectedIndex==null) return setStatus("Choisis une carte.");
-        networkedPlayOneCard(selectedIndex,i);
-      };
-    }
-
+    /******** EVENTS ********/
     document.getElementById("btn-solo").onclick = startSolo;
     document.getElementById("btn-create-online").onclick = createOnlineRoom;
     document.getElementById("btn-join-online").onclick = joinOnlineRoom;
 
-    startSolo();
+    document.getElementById("new-game").onclick = ()=>{
+      if(mode==="online"){
+        // En multijoueur, on évite de reset la room (sinon grief). On repasse en solo.
+        startSolo();
+      } else {
+        state = newGameState(localPlayerId);
+        selectedIndex = null;
+        setStatus("Reset.");
+        render();
+      }
+    };
+
+    document.getElementById("end-turn").onclick = onEndTurn;
+
+    for(let i=0;i<4;i++){
+      document.getElementById("pile-"+i).onclick = ()=>onPileClick(i);
+    }
+
+    // démarrage: si pas de state, affiche message
+    render();
   </script>
 </body>
 </html>
